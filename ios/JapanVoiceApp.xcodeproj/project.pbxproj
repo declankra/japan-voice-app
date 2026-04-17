@@ -1,0 +1,409 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5B63844B7DA49649E239DBF8 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC20872DC0030B89B8800508 /* AppState.swift */; };
+		5F5E52B1DCAAA129D0A9888A /* WorkerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509C25938BA0AC14BE7432A2 /* WorkerClient.swift */; };
+		6E846584C37E40D13C0F05AA /* HomeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946AF5A5821FB1D62FF09C6B /* HomeScreen.swift */; };
+		749E08B2EEFEE09946F6FE76 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA247768E4B7B76AA87466AB /* AppTheme.swift */; };
+		846BA295676ED71EC2272280 /* ConversationSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDC5398090CA039FCB889E59 /* ConversationSession.swift */; };
+		8E3A76DAABF5599282F4A162 /* JapanVoiceAppApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84BAE5D8DE21FCC564E50789 /* JapanVoiceAppApp.swift */; };
+		9493E85EEB206851DC791859 /* RealtimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD16C1BF67A4A90ADBBB682 /* RealtimeService.swift */; };
+		EA4DEE06722CBCB60C042E2D /* ConversationScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82DA652394277BBDC9248C0D /* ConversationScreen.swift */; };
+		FA6ABB1F51A527BE0D982DA3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 53DE0C8894C0A83653F667F5 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2984E730BA0A42AFD0A3BAEE /* JapanVoiceApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = JapanVoiceApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		509C25938BA0AC14BE7432A2 /* WorkerClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkerClient.swift; sourceTree = "<group>"; };
+		53DE0C8894C0A83653F667F5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		82DA652394277BBDC9248C0D /* ConversationScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationScreen.swift; sourceTree = "<group>"; };
+		84BAE5D8DE21FCC564E50789 /* JapanVoiceAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JapanVoiceAppApp.swift; sourceTree = "<group>"; };
+		946AF5A5821FB1D62FF09C6B /* HomeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeScreen.swift; sourceTree = "<group>"; };
+		ABD16C1BF67A4A90ADBBB682 /* RealtimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealtimeService.swift; sourceTree = "<group>"; };
+		DC20872DC0030B89B8800508 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		FA247768E4B7B76AA87466AB /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		FDC5398090CA039FCB889E59 /* ConversationSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationSession.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		14D090A3921FB7DF7415314C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				ABD16C1BF67A4A90ADBBB682 /* RealtimeService.swift */,
+				509C25938BA0AC14BE7432A2 /* WorkerClient.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		608E477B71505367FCFE6E6D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FDC5398090CA039FCB889E59 /* ConversationSession.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		65459CAF59E56091D9CD8A17 /* Conversation */ = {
+			isa = PBXGroup;
+			children = (
+				82DA652394277BBDC9248C0D /* ConversationScreen.swift */,
+			);
+			path = Conversation;
+			sourceTree = "<group>";
+		};
+		6FCC79B76C89749CA0B2CEDF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2984E730BA0A42AFD0A3BAEE /* JapanVoiceApp.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7B77496D8B9CAE82F516BFBC /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				65459CAF59E56091D9CD8A17 /* Conversation */,
+				8D5F40E99661BD010F512F34 /* Home */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		8D5F40E99661BD010F512F34 /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				946AF5A5821FB1D62FF09C6B /* HomeScreen.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		E56472CEB80A666D5B31723D /* App */ = {
+			isa = PBXGroup;
+			children = (
+				DC20872DC0030B89B8800508 /* AppState.swift */,
+				84BAE5D8DE21FCC564E50789 /* JapanVoiceAppApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E915B3F16510BCB06F320879 = {
+			isa = PBXGroup;
+			children = (
+				ECC6349C1864D529BCBF058B /* JapanVoiceApp */,
+				6FCC79B76C89749CA0B2CEDF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		ECC6349C1864D529BCBF058B /* JapanVoiceApp */ = {
+			isa = PBXGroup;
+			children = (
+				53DE0C8894C0A83653F667F5 /* Assets.xcassets */,
+				E56472CEB80A666D5B31723D /* App */,
+				FA2ED5B89AABED600AA27511 /* Design */,
+				7B77496D8B9CAE82F516BFBC /* Features */,
+				608E477B71505367FCFE6E6D /* Models */,
+				14D090A3921FB7DF7415314C /* Services */,
+			);
+			path = JapanVoiceApp;
+			sourceTree = "<group>";
+		};
+		FA2ED5B89AABED600AA27511 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				FA247768E4B7B76AA87466AB /* AppTheme.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		02B1C5A75D0BF06F79A15AF6 /* JapanVoiceApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A941D4E7AD224916F926A954 /* Build configuration list for PBXNativeTarget "JapanVoiceApp" */;
+			buildPhases = (
+				83EB2DE1C0E764FEC905C176 /* Sources */,
+				C28FD9CE305F51E215E94050 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JapanVoiceApp;
+			packageProductDependencies = (
+			);
+			productName = JapanVoiceApp;
+			productReference = 2984E730BA0A42AFD0A3BAEE /* JapanVoiceApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		97593BBEDF9CC903125A32E1 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					02B1C5A75D0BF06F79A15AF6 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 51E79ACAF8DED2306CEDE2A3 /* Build configuration list for PBXProject "JapanVoiceApp" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = E915B3F16510BCB06F320879;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 6FCC79B76C89749CA0B2CEDF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				02B1C5A75D0BF06F79A15AF6 /* JapanVoiceApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C28FD9CE305F51E215E94050 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA6ABB1F51A527BE0D982DA3 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		83EB2DE1C0E764FEC905C176 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B63844B7DA49649E239DBF8 /* AppState.swift in Sources */,
+				749E08B2EEFEE09946F6FE76 /* AppTheme.swift in Sources */,
+				EA4DEE06722CBCB60C042E2D /* ConversationScreen.swift in Sources */,
+				846BA295676ED71EC2272280 /* ConversationSession.swift in Sources */,
+				6E846584C37E40D13C0F05AA /* HomeScreen.swift in Sources */,
+				8E3A76DAABF5599282F4A162 /* JapanVoiceAppApp.swift in Sources */,
+				9493E85EEB206851DC791859 /* RealtimeService.swift in Sources */,
+				5F5E52B1DCAAA129D0A9888A /* WorkerClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		7988AEE1E36988E66C518091 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.1;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		D7CCE5B7953132624A94645B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.1;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E7D6229E6ED5D3F50F49561E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Japan Voice";
+				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.JapanVoiceApp;
+				PRODUCT_NAME = JapanVoiceApp;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F2AD8A335ADD97C45CEB78E3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Japan Voice";
+				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.JapanVoiceApp;
+				PRODUCT_NAME = JapanVoiceApp;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		51E79ACAF8DED2306CEDE2A3 /* Build configuration list for PBXProject "JapanVoiceApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7988AEE1E36988E66C518091 /* Debug */,
+				D7CCE5B7953132624A94645B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A941D4E7AD224916F926A954 /* Build configuration list for PBXNativeTarget "JapanVoiceApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7D6229E6ED5D3F50F49561E /* Debug */,
+				F2AD8A335ADD97C45CEB78E3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 97593BBEDF9CC903125A32E1 /* Project object */;
+}
