@@ -32,7 +32,7 @@ The plan should be good enough that another agent could execute it step by step 
 - home screen with one centered launch control using the waveform visual
 - conversation screen with:
   - split layout
-  - tap left/right to switch active speaker
+  - swipe on your own side toward the other person to hand off the translation lane
   - center waveform tap to pause/resume
   - center waveform long-press with progress ring to end conversation and return home
 
@@ -44,12 +44,12 @@ Break the work into clear phases and tasks for:
    - home screen
    - conversation screen
    - centered waveform control
-   - active speaker switching
+   - swipe-based speaker handoff
    - navigation between home and conversation
 
 2. **State model**
    - app/session state
-   - active speaker and direction state
+   - active speaker and translation direction state
    - paused/running/ending states
    - long-press exit progress state
 
@@ -66,6 +66,7 @@ Break the work into clear phases and tasks for:
 
 5. **UI polish for v1**
    - visual treatment of active vs inactive speaker side
+   - clear swipe affordance for handing the translation lane to the other person
    - smooth transition from home button to center waveform control
    - pause vs end interaction clarity
 

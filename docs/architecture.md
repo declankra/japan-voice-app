@@ -22,13 +22,13 @@ Locked v1 choices for [[vision]].
    Reason: it is the fastest route to a usable realtime translation prototype with the fewest moving parts. We can benchmark other providers later if Japanese accuracy becomes the bottleneck.
 
 4. **One active speaker at a time**
-   Reason: this is the cleanest interaction model on one phone. The user taps the side of the current speaker, the translation direction flips (`EN -> JA` or `JA -> EN`), and the opposite side becomes the prominent live output surface.
+   Reason: this is the cleanest interaction model on one phone. The current speaker swipes on their own side toward the other person, the translation direction flips (`EN -> JA` or `JA -> EN`), and the opposite side becomes the prominent live output surface.
 
 ## How the app will work
 
 - The home screen is minimal and centered around one launch control using the `waveform.circle.fill` visual.
 - Tapping that button opens the conversation surface. The button stays in the same physical place and becomes the center waveform/signal control, so the transition feels seamless.
-- On the conversation screen, the left and right halves represent the two people. Tapping a side makes that person the active speaker and flips the translation direction.
+- On the conversation screen, the left and right halves represent the two people. Each person swipes on their own half toward the other person to hand off the lane and flip the translation direction.
 - The active speaker side becomes lighter and less visually dominant. The opposite side becomes bolder because it is showing the live translated text.
 - The center waveform indicates that realtime transcription is running. Tapping it pauses or resumes the live session.
 - Holding the center waveform starts an exit action. A ring grows around the button while it is held, and once the ring completes, the conversation ends and the app returns to the home screen. Releasing early cancels the exit.
@@ -40,7 +40,7 @@ Locked v1 choices for [[vision]].
 2. Tap centered waveform button
 3. App requests a short-lived realtime token from the Cloudflare Worker
 4. App connects to the realtime session
-5. User taps the side of the current speaker
+5. The current speaker swipes on their own side toward the other person to hand off the translation lane
 6. Audio streams in, translation appears live on the opposite side
 7. Center waveform can pause/resume at any time
 8. Hold the center waveform until the progress ring completes to end the conversation and return home

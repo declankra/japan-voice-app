@@ -37,7 +37,7 @@ The app will eventually request a short-lived realtime bootstrap from the worker
 | `ios/JapanVoiceApp/App/JapanVoiceAppApp.swift` | App entry point that injects shared app state |
 | `ios/JapanVoiceApp/App/AppState.swift` | Minimal session/app coordinator for screen state and worker bootstrap |
 | `ios/JapanVoiceApp/Features/Home/HomeScreen.swift` | Placeholder launch screen for starting a conversation |
-| `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift` | Split-screen conversation stub with active speaker controls |
+| `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift` | Split-screen conversation stub with swipe-based speaker handoff controls |
 | `ios/JapanVoiceApp/Services/WorkerClient.swift` | Small client for the worker bootstrap endpoints |
 | `ios/JapanVoiceApp/Services/RealtimeService.swift` | Protocol seam for future OpenAI Realtime integration |
 | `worker/src/index.ts` | Minimal worker with `/health` and `/ws-token` placeholder routes |
