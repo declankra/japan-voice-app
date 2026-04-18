@@ -1,20 +1,49 @@
 import Foundation
 
-protocol RealtimeService {
+enum RealtimeServiceEvent: Sendable {
+    case sessionReady(String)
+    case inputTranscriptChanged(String)
+    case outputTextChanged(String)
+    case transportLost(String)
+}
+
+enum RealtimeServiceConnectError: LocalizedError, Sendable {
+    case microphonePermissionDenied
+    case audioSessionConfigurationFailed(String)
+    case websocketSetupFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .microphonePermissionDenied:
+            return "Microphone permission was denied."
+        case .audioSessionConfigurationFailed(let details):
+            return "Audio session setup failed. \(details)"
+        case .websocketSetupFailed(let details):
+            return "Realtime transport setup failed. \(details)"
+        }
+    }
+}
+
+protocol RealtimeService: AnyObject {
+    func setEventHandler(_ handler: @escaping @Sendable (RealtimeServiceEvent) -> Void)
     func connect(using bootstrap: RealtimeBootstrap) async throws
     func pause() async
-    func resume() async
+    func resume() async throws
     func disconnect() async
 }
 
-struct NoopRealtimeService: RealtimeService {
+final class NoopRealtimeService: RealtimeService {
+    func setEventHandler(_ handler: @escaping @Sendable (RealtimeServiceEvent) -> Void) {
+        _ = handler
+    }
+
     func connect(using bootstrap: RealtimeBootstrap) async throws {
         _ = bootstrap
     }
 
     func pause() async {}
 
-    func resume() async {}
+    func resume() async throws {}
 
     func disconnect() async {}
 }

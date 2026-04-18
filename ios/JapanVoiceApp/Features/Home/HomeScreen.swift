@@ -5,48 +5,54 @@ struct HomeScreen: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [AppTheme.backgroundStart, AppTheme.backgroundEnd],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AppTheme.appBackground
+                .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                Spacer()
+            VStack(spacing: 0) {
+                Spacer(minLength: 72)
 
                 Text("Japan Voice")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(.white)
+                    .font(.system(size: 44, weight: .medium, design: .default))
+                    .foregroundStyle(AppTheme.primaryText)
+                    .tracking(-1.4)
+                    .accessibilityAddTraits(.isHeader)
 
-                Text("Split-screen realtime conversation scaffold for one active speaker at a time.")
-                    .font(.body)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.white.opacity(0.82))
-                    .padding(.horizontal, 32)
+                Spacer()
 
                 Button {
                     appState.startConversation()
                 } label: {
-                    Image(systemName: "waveform.circle.fill")
-                        .font(.system(size: 96))
-                        .foregroundStyle(AppTheme.accent)
+                    ZStack {
+                        Circle()
+                            .stroke(AppTheme.controlFill, lineWidth: 3)
+                            .frame(width: 148, height: 148)
+
+                        Image(systemName: "waveform")
+                            .font(.system(size: 42, weight: .medium))
+                            .foregroundStyle(AppTheme.controlFill)
+                    }
+                    .frame(width: 180, height: 180)
                 }
                 .buttonStyle(.plain)
-
-                Text("Start Conversation")
-                    .font(.headline)
-                    .foregroundStyle(.white)
+                .accessibilityLabel("Start conversation")
+                .accessibilityHint("Opens the shared translation surface.")
 
                 Spacer()
 
-                Text("Worker bootstrap is stubbed. Audio and translation are intentionally not wired yet.")
-                    .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.72))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
-                    .padding(.bottom, 28)
+                VStack(spacing: 10) {
+                    Text("Tap to begin")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(AppTheme.primaryText)
+
+                    Text("Live bilingual conversation, routed through a minimal shared surface.")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundStyle(AppTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 36)
+                }
+                .padding(.bottom, 34)
             }
+            .padding(.horizontal, 28)
         }
     }
 }

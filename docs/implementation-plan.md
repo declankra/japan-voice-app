@@ -1,8 +1,9 @@
+<!-- /autoplan restore point: /Users/macbook/.gstack/projects/declankra-japan-voice-app/main-autoplan-restore-20260417-233407.md -->
 # Japan Voice App v1 Implementation Plan
 
 ## v1 goal
 
-v1 should prove the wedge from [docs/vision.md](./vision.md): a traveler can place the phone flat between two people, keep one thumb near the center waveform, and hold a live EN⇄JA conversation that feels more continuous and less awkward than Google Translate conversation mode. The implementation sequence below is biased toward that physical interaction model first, then a real worker/bootstrap contract, then the live Realtime path, and only then benchmark proof and observability.
+v1 should prove the wedge from [docs/vision.md](./vision.md): a traveler can place the phone flat between two people, keep one thumb near the center waveform, and hold a live EN⇄JA conversation that feels more continuous and less awkward than Google Translate conversation mode. The implementation sequence below is biased toward that physical interaction model first, then a real worker/bootstrap contract, then the live Realtime path, then benchmark proof and observability against the current OpenAI Realtime default model (`gpt-realtime-1.5`).
 
 ## Sequencing rationale
 
@@ -35,6 +36,30 @@ Use [docs/designs/v1-shell.md](./designs/v1-shell.md) as the source of truth, wi
 └──────────────────────────────────────┘
 ```
 
+## Approved visual direction
+
+Autoplan design review selected a stricter monochrome direction based on the approved mockup at [variant-C.png](</Users/macbook/.gstack/projects/declankra-japan-voice-app/designs/conversation-shell-20260417/variant-C.png>). Treat that image as layout and mood reference, not literal text content.
+
+The shell is now locked to these visual rules:
+
+- **Palette:** black, white, and two neutral grays only. No gradients, no accent color, no tinted panels, no ornamental shadows.
+- **Home screen:** pure black full-screen surface, one small title, one centered waveform start control, one quiet line of support copy near the bottom edge.
+- **Conversation screen:** full-bleed top/bottom split, razor-thin divider, one centered waveform transport control that visually bridges both panes, one compact status capsule, no separate bordered CTA chrome.
+- **Hierarchy:** translated text is the loudest element on screen, transport is second, state copy is third, speaker labels are quiet and peripheral.
+- **Tone:** OpenAI-like restraint on iPhone, calm instrument not startup dashboard. That means no generic cards, no decorative icons, no marketing-style section rhythm, no playful microcopy.
+- **Typography:** use the native San Francisco family with deliberate size contrast, not novelty fonts or heavy stylistic treatments. Large translated text should feel poster-like, while labels and state copy stay compact.
+- **Rotation rule:** the far pane is still implemented rotated 180° for shared-table use even if the approved mockup is shown upright for readability.
+- **Surface rule:** the currently listening pane is the lighter surface, the translated-output pane is the darker surface. When handoff flips, the light/dark relationship flips with it.
+
+## What already exists
+
+The plan should preserve the existing product wedge and interaction decisions already locked elsewhere in the repo:
+
+- `docs/vision.md` already defines the travel-context wedge and the "why not Google Translate" argument.
+- `docs/architecture.md` already locks the top/bottom shared-surface model, center waveform control, and swipe handoff semantics.
+- `docs/designs/v1-shell.md` already names the top/bottom geometry, reconnect/error expectations, and accessibility floor.
+- The current SwiftUI scaffold already has the right file seams: `HomeScreen`, `ConversationScreen`, `AppState`, `ConversationSession`, and `AppTheme`. The design review changes the visual system and interaction polish, not the ownership model.
+
 ## File ownership
 
 | File | Responsibility in v1 | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
@@ -45,6 +70,7 @@ Use [docs/designs/v1-shell.md](./designs/v1-shell.md) as the source of truth, wi
 | `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift` | Top/bottom teleprompter UI, swipe/tap handoff, center waveform behavior, failure copy | Primary | Update | Primary | Polish |
 | `ios/JapanVoiceApp/Models/ConversationSession.swift` | Active speaker, direction labels, transcript/status state, reconnect/error display state | Update | Update | Primary | Update |
 | `ios/JapanVoiceApp/Design/AppTheme.swift` | Active/inactive color tokens and contrast rules | Primary | Reference | Reference | Polish |
+| `ios/JapanVoiceApp/Resources/LaunchScreen.storyboard` | Minimal launch screen so iOS renders the app edge-to-edge instead of legacy compatibility mode | Primary | Reference | Reference | Reference |
 | `ios/JapanVoiceApp/Services/WorkerClient.swift` | Worker request auth, timeout, decode/validation, bootstrap error taxonomy | Reference | Primary | Update | Update |
 | `ios/JapanVoiceApp/Services/RealtimeService.swift` | The one allowed realtime seam; extend it rather than splitting providers | Reference | Reference | Primary | Reference |
 | `ios/JapanVoiceApp/Services/OpenAIRealtimeService.swift` | Concrete Realtime WebSocket + audio capture implementation | New | - | Primary | Update |
@@ -70,39 +96,48 @@ Use [docs/designs/v1-shell.md](./designs/v1-shell.md) as the source of truth, wi
 
 ### Tasks
 
-1. Rebuild the conversation surface into a top/bottom split aligned to the phone’s long axis, with the far half rendered 180° rotated, mirrored alignment/padding, and active/inactive styling corrected so the listening side is lighter and the translated-output side is bolder.
+1. Add a minimal launch screen and wire it through `ios/project.yml` so the app renders full-screen on modern iPhones instead of 320×480 compatibility mode. The launch screen should inherit the monochrome system: black background, quiet wordmark, no extra illustration.
+   Files: `ios/project.yml`, `ios/JapanVoiceApp/Resources/LaunchScreen.storyboard`.
+
+2. Rebuild the home shell around the approved monochrome reference: pure black background, restrained title treatment, one centered waveform start control, and reduced supporting copy. Remove the current gradient, gold accent, and oversized placeholder feel.
+   Files: `ios/JapanVoiceApp/Features/Home/HomeScreen.swift`, `ios/JapanVoiceApp/Design/AppTheme.swift`.
+
+3. Rebuild the conversation surface into a top/bottom split aligned to the phone’s long axis, with the far half rendered 180° rotated, mirrored alignment/padding, and active/inactive styling corrected so the listening side is lighter and the translated-output side is bolder. The center control should visually bridge the divider instead of living as a stacked control panel.
    Files: `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift`, `ios/JapanVoiceApp/Design/AppTheme.swift`, `ios/JapanVoiceApp/Models/ConversationSession.swift`.
 
-2. Replace tap-to-select lane switching with an explicit handoff contract: the active speaker swipes toward the opposite end of the phone; the gesture succeeds only after crossing a distance threshold of **40% of that pane’s height**; releasing below threshold cancels; reversing direction cancels; swipes during `.bootstrapping` are ignored and show a short “Connecting…” hint; if both sides complete a qualifying swipe, the **last completed swipe wins**.
+4. Replace tap-to-select lane switching with an explicit handoff contract: the active speaker swipes toward the opposite end of the phone; the gesture succeeds only after crossing a distance threshold of **40% of that pane’s height**; releasing below threshold cancels; reversing direction cancels; swipes during `.bootstrapping` are ignored and show a short “Connecting…” hint; if both sides complete a qualifying swipe, the **last completed swipe wins**.
    Files: `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift`, `ios/JapanVoiceApp/App/AppState.swift`, `ios/JapanVoiceApp/Models/ConversationSession.swift`.
 
-3. Add the accessibility fallback for handoff: tapping either pane flips direction without dragging, and VoiceOver exposes each half as a labeled button-like target with clear speaker/direction copy.
+5. Add the accessibility fallback for handoff: tapping either pane flips direction without dragging, and VoiceOver exposes each half as a labeled button-like target with clear speaker/direction copy.
    Files: `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift`, `ios/JapanVoiceApp/App/AppState.swift`.
 
-4. Replace the current pause button plus separate “End Conversation” button with one center waveform control: tap toggles pause/resume; press-and-hold for **1.5 seconds** grows a visible ring and ends the conversation; releasing early or dragging off the control cancels the exit; the same control stays in the same physical center position when entering from `HomeScreen`.
+6. Replace the current pause button plus separate “End Conversation” button with one center waveform control: tap toggles pause/resume; press-and-hold for **1.5 seconds** grows a visible ring and ends the conversation; releasing early or dragging off the control cancels the exit; the same control stays in the same physical center position when entering from `HomeScreen`. The destructive affordance should be visually quiet until the hold begins.
    Files: `ios/JapanVoiceApp/Features/Home/HomeScreen.swift`, `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift`, `ios/JapanVoiceApp/App/AppState.swift`.
 
-5. Raise the accessibility floor for the shell: Dynamic Type must keep the title/status copy readable without clipping, hit targets must remain reachable, and the swipe affordance must be visible on first use through a small chevron plus hint text that disappears after the first successful handoff.
+7. Raise the accessibility floor for the shell: Dynamic Type must keep the title/status copy readable without clipping, hit targets must remain reachable, and the swipe affordance must be visible on first use through a small chevron plus hint text that disappears after the first successful handoff.
    Files: `ios/JapanVoiceApp/Features/Home/HomeScreen.swift`, `ios/JapanVoiceApp/Features/Conversation/ConversationScreen.swift`.
 
-6. Keep the shell honest about its current stage: `NoopRealtimeService` stays in place, and shell status copy must say the session is UI-only until the live transport arrives so manual QA cannot mistake the stub for real translation.
+8. Keep the shell honest about its current stage: `NoopRealtimeService` stays in place, and shell status copy must say the session is UI-only until the live transport arrives so manual QA cannot mistake the stub for real translation. The copy should stay terse and product-like, not dev-placeholder-like.
    Files: `ios/JapanVoiceApp/App/AppState.swift`, `ios/JapanVoiceApp/Models/ConversationSession.swift`, `ios/JapanVoiceApp/Services/RealtimeService.swift`.
 
 ### Acceptance criteria
 
 | Check | How to verify |
 | --- | --- |
+| App is full-screen on current iPhones | Launch on the iPhone 16 simulator and confirm the content fills the full device canvas with no legacy letterboxing. |
 | Top/bottom layout is correct | Launch the app in the simulator; the conversation surface is vertically split, the top half is visibly rotated 180°, and the visual hierarchy matches the design sketch. |
 | Handoff behavior is fully specified in the shell | On the simulator, drag upward on the bottom pane and downward on the top pane; only drags that cross roughly 40% of the pane height flip direction, while short or reversed drags cancel. |
 | Tap fallback exists | With VoiceOver on, double-tap either pane and confirm the active speaker flips without a drag gesture. |
 | Center control behavior is unambiguous | Tap the waveform to toggle paused/ready visuals; hold for 1.5 seconds to return home; release early and confirm the session stays open. |
 | Accessibility floor is met | Increase Dynamic Type to a large accessibility size and enable VoiceOver; labels still read clearly, hint text remains understandable, and the shell stays usable. |
+| Visual system matches the approved direction | Compare the running app against the approved mockup: monochrome only, no gradients or accent colors, sparse chrome, and one clear visual hierarchy. |
 
 ### Out of scope for this phase
 
 - Real worker auth or OpenAI client-secret minting.
 - Real WebSocket/audio capture or transcript streaming.
 - Reconnect/backoff, interruption handling, or benchmark execution.
+- Marketing-style onboarding, tutorials, or decorative motion.
 
 ## Phase 2 — Worker + bootstrap contract
 
@@ -222,3 +257,9 @@ Use [docs/designs/v1-shell.md](./designs/v1-shell.md) as the source of truth, wi
 - Switching away from OpenAI Realtime if the benchmark fails; that becomes the next plan.
 - Battery budgeting, sunlight readability work, or on-device fallback.
 - App Store prep, analytics, auth, or persistence.
+
+## Approved Mockups
+
+| Screen/Section | Mockup Path | Direction | Notes |
+|----------------|-------------|-----------|-------|
+| Home + conversation shell | `/Users/macbook/.gstack/projects/declankra-japan-voice-app/designs/conversation-shell-20260417/variant-C.png` | Stark black/white instrument UI with centered waveform bridge control | Implement the far pane rotated 180° even though the reference image is upright; keep status chrome smaller than shown if readability still holds. |

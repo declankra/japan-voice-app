@@ -39,6 +39,7 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+ios/Config/Local.xcconfig
 
 # Editor
 .vscode/

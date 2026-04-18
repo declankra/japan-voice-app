@@ -1,3 +1,4 @@
+import AVFAudio
 import SwiftUI
 
 @main
@@ -14,6 +15,7 @@ struct JapanVoiceAppApp: App {
 
 private struct AppRootView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -23,6 +25,12 @@ private struct AppRootView: View {
             case .conversation:
                 ConversationScreen()
             }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            appState.handleScenePhaseChange(newPhase)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)) { notification in
+            appState.handleAudioInterruption(notification)
         }
     }
 }

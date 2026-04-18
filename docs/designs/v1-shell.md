@@ -14,7 +14,20 @@ Outcome of a CEO-level review of `vision.md` + `architecture.md` on 2026-04-17. 
 
 ## Vision recap
 
-Realtime voice translation for face-to-face conversations with locals in Japan. Split-screen teleprompter, one active speaker at a time, swipe to hand off the translation lane. SwiftUI iPhone app + one personal Cloudflare Worker. OpenAI Realtime (`gpt-realtime`) for v1, with the `RealtimeService` protocol as the swap seam if the provider needs to change.
+Realtime voice translation for face-to-face conversations with locals in Japan. Split-screen teleprompter, one active speaker at a time, swipe to hand off the translation lane. SwiftUI iPhone app + one personal Cloudflare Worker. OpenAI Realtime (`gpt-realtime-1.5`) for v1, with the `RealtimeService` protocol as the swap seam if the provider needs to change.
+
+## Visual direction lock
+
+Autoplan design review tightened the shell into a monochrome, OpenAI-like direction. The approved reference is [variant-C.png](</Users/macbook/.gstack/projects/declankra-japan-voice-app/designs/conversation-shell-20260417/variant-C.png>).
+
+This adds these non-negotiable visual constraints to v1:
+
+- Black, white, and neutral grays only. No gradients, no accent hues, no decorative glow.
+- Home screen is almost empty: black field, restrained title, one centered waveform start control, one line of quiet support copy.
+- Conversation shell is full-bleed and architectural, not card-based: two hard-edged panes, razor-thin divider, centered waveform control that bridges the split.
+- The translated-output pane is the boldest surface. The currently listening pane is the lighter, calmer surface.
+- Status chrome stays compact. It exists to orient, not decorate.
+- The far pane is still implemented rotated 180° for real shared-table use even though the approved mockup is upright for readability.
 
 ## Strategic wedge (to be written into `vision.md`)
 
