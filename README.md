@@ -17,7 +17,11 @@ Lean scaffold for a native iPhone app plus a small Cloudflare Worker companion.
 
 ### iOS app
 
-1. Install Xcode 16+.
+1. Install Xcode 16+ and `xcodegen`:
+
+```bash
+brew install xcodegen
+```
 2. Copy the local config template and fill in your values:
 
 ```bash
@@ -42,8 +46,18 @@ open ios/JapanVoiceApp.xcodeproj
 `ios/Config/Local.xcconfig` is ignored by git. That file is where you set:
 - `APP_BUNDLE_IDENTIFIER`
 - `APP_DEVELOPMENT_TEAM`
-- `JAPAN_VOICE_WORKER_BASE_URL`
+- `JAPAN_VOICE_WORKER_BASE_HOST`
+- Optional `JAPAN_VOICE_WORKER_BASE_SCHEME`
 - `JAPAN_VOICE_APP_SHARED_SECRET`
+
+For simulator-only local development against `wrangler dev`, set:
+
+```xcconfig
+JAPAN_VOICE_WORKER_BASE_HOST = 127.0.0.1:8787
+JAPAN_VOICE_WORKER_BASE_SCHEME = http
+```
+
+For a deployed worker or a real iPhone, keep the default `https` scheme and set only the hostname, not a full URL.
 
 ### Worker
 
@@ -111,7 +125,8 @@ cd worker
 npm run deploy
 ```
 
-5. Copy the deployed `https://...workers.dev` URL into `ios/Config/Local.xcconfig` as `JAPAN_VOICE_WORKER_BASE_URL`.
+5. Copy the deployed `https://...workers.dev` hostname into `ios/Config/Local.xcconfig` as `JAPAN_VOICE_WORKER_BASE_HOST`.
+   Example: `https://japan-voice-worker.example.workers.dev` becomes `japan-voice-worker.example.workers.dev`
 6. Put the same `APP_SHARED_SECRET` value into `ios/Config/Local.xcconfig` as `JAPAN_VOICE_APP_SHARED_SECRET`.
 7. Set `APP_DEVELOPMENT_TEAM` to your Apple team ID and `APP_BUNDLE_IDENTIFIER` to an identifier you control.
 8. Open `ios/JapanVoiceApp.xcodeproj`, choose your connected iPhone as the run destination, and run the app from Xcode.
@@ -121,6 +136,10 @@ npm run deploy
 
 - The app does not store a long-lived OpenAI API key on-device. The worker mints a short-lived Realtime client secret and the phone connects to OpenAI Realtime directly.
 - `worker/.env.example` and `ios/Config/Local.xcconfig.example` are safe to commit. Your real secrets belong only in `worker/.dev.vars`, Cloudflare secrets, and your ignored `ios/Config/Local.xcconfig`.
+- A fresh GitHub clone is enough to scaffold the project. The intentionally missing local-only pieces are:
+  - `ios/Config/Local.xcconfig`
+  - `worker/.dev.vars`
+  - Cloudflare Worker secrets created with `wrangler secret put`
 
 ## Current state
 

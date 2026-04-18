@@ -1,7 +1,12 @@
 // Copy this file to ios/Config/Local.xcconfig and fill in your own values.
 // Do not commit Local.xcconfig.
+// Use the worker hostname only, not a full URL.
+// For local simulator work, set:
+// JAPAN_VOICE_WORKER_BASE_HOST = 127.0.0.1:8787
+// JAPAN_VOICE_WORKER_BASE_SCHEME = http
 
 APP_BUNDLE_IDENTIFIER = com.yourname.JapanVoiceApp
 APP_DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID
 JAPAN_VOICE_WORKER_BASE_HOST = your-worker-subdomain.workers.dev
+JAPAN_VOICE_WORKER_BASE_SCHEME = https
 JAPAN_VOICE_APP_SHARED_SECRET = replace-with-a-random-shared-secret
