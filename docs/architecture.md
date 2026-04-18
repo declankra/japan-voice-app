@@ -28,11 +28,15 @@ Locked v1 choices for [[vision]].
 
 - The home screen is minimal and centered around one launch control using the `waveform.circle.fill` visual.
 - Tapping that button opens the conversation surface. The button stays in the same physical place and becomes the center waveform/signal control, so the transition feels seamless.
-- On the conversation screen, the left and right halves represent the two people. Each person swipes on their own half toward the other person to hand off the lane and flip the translation direction.
+- On the conversation screen, the **top half and bottom half** represent the two people. The phone is held portrait but laid flat between them, long axis pointing from one person to the other. The far half's content is rotated 180° so each person reads right-side-up from their own end. Each person swipes on their own half toward the other person to hand off the lane and flip the translation direction (direction of "toward the other person" is visually opposite on the two halves but maps to the same logical handoff).
 - The active speaker side becomes lighter and less visually dominant. The opposite side becomes bolder because it is showing the live translated text.
 - The center waveform indicates that realtime transcription is running. Tapping it pauses or resumes the live session.
 - Holding the center waveform starts an exit action. A ring grows around the button while it is held, and once the ring completes, the conversation ends and the app returns to the home screen. Releasing early cancels the exit.
 - No gesture-based enter/exit flow in v1. iPhone reliability and discoverability matter more than cleverness here.
+
+## v1 scope detail
+
+The concrete v1 specification — including the worker shared-secret auth, WebSocket reconnect state, screen-orientation flip, swipe gesture spec, OpenAI Realtime session config, error-handling requirements, accessibility floor, and the bilingual benchmark phrase set — lives in `docs/designs/v1-shell.md`. The implementation plan (to be produced via `docs/implementation-plan-prompt.md`) must inherit every decision there.
 
 ## High-level flow
 
