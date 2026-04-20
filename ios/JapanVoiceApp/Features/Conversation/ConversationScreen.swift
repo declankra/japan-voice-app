@@ -58,8 +58,10 @@ struct ConversationScreen: View {
 
     private var centerOverlay: some View {
         ZStack {
-            transportStatus
-                .offset(y: AppTheme.transportStatusVerticalOffset)
+            if shouldShowTransportStatus {
+                transportStatus
+                    .offset(y: AppTheme.transportStatusVerticalOffset)
+            }
 
             transportControl
         }
@@ -162,6 +164,19 @@ struct ConversationScreen: View {
         }
 
         return transientMessage ?? appState.session.statusMessage
+    }
+
+    private var shouldShowTransportStatus: Bool {
+        if isHoldingExit || transientMessage != nil {
+            return true
+        }
+
+        switch appState.session.connectionState {
+        case .ready:
+            return false
+        case .idle, .bootstrapping, .paused, .reconnecting(_), .failed(_):
+            return true
+        }
     }
 
     private var transportSymbolName: String {
