@@ -19,4 +19,10 @@ enum AppTheme {
     static let statusCapsuleDark = Color.white.opacity(0.08)
     static let statusCapsuleLight = Color.black.opacity(0.08)
     static let statusBorder = Color.white.opacity(0.12)
+
+    static let transportControlDiameter: CGFloat = 84
+    static let transportControlProgressDiameter: CGFloat = 98
+    static let transportControlHitDiameter: CGFloat = 180
+    static let transportControlIconSize: CGFloat = 26
+    static let transportStatusVerticalOffset: CGFloat = -86
 }

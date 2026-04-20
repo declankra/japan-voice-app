@@ -21,7 +21,12 @@ private struct AppRootView: View {
         Group {
             switch appState.screen {
             case .home:
-                HomeScreen()
+                NavigationStack {
+                    HomeScreen()
+                        .navigationDestination(for: ConversationThread.self) { thread in
+                            ConversationTranscriptDetailScreen(thread: thread)
+                        }
+                }
             case .conversation:
                 ConversationScreen()
             }

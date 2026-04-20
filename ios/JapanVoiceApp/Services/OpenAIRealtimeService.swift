@@ -203,8 +203,12 @@ final class OpenAIRealtimeService: NSObject, RealtimeService {
             eventHandler(.sessionReady(sessionId))
         case .inputTranscriptChanged(let text):
             eventHandler(.inputTranscriptChanged(text))
+        case .inputTranscriptFinalized(let text):
+            eventHandler(.inputTranscriptFinalized(text))
         case .outputTextChanged(let text):
             eventHandler(.outputTextChanged(text))
+        case .outputTextFinalized(let text):
+            eventHandler(.outputTextFinalized(text))
         case .transportLost(let message):
             logger.error("Realtime transport lost for session \(self.currentSessionId ?? "unknown", privacy: .public): \(message, privacy: .public)")
             eventHandler(.transportLost(message))
@@ -216,7 +220,9 @@ actor RealtimeWebSocketTransport {
     enum TransportEvent: Sendable {
         case sessionCreated(String)
         case inputTranscriptChanged(String)
+        case inputTranscriptFinalized(String)
         case outputTextChanged(String)
+        case outputTextFinalized(String)
         case transportLost(String)
     }
 
@@ -370,8 +376,10 @@ actor RealtimeWebSocketTransport {
 
         case "conversation.item.input_audio_transcription.completed":
             let transcript = json["transcript"] as? String ?? inputTranscriptBuffer
-            inputTranscriptBuffer = transcript
-            handler(.inputTranscriptChanged(transcript))
+            if !transcript.isEmpty {
+                handler(.inputTranscriptFinalized(transcript))
+            }
+            inputTranscriptBuffer = ""
 
         case "response.output_text.delta":
             let delta = json["delta"] as? String ?? ""
@@ -380,8 +388,10 @@ actor RealtimeWebSocketTransport {
 
         case "response.output_text.done":
             let text = json["text"] as? String ?? outputTextBuffer
-            outputTextBuffer = text
-            handler(.outputTextChanged(text))
+            if !text.isEmpty {
+                handler(.outputTextFinalized(text))
+            }
+            outputTextBuffer = ""
 
         case "response.done":
             outputTextBuffer = ""

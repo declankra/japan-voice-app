@@ -3,7 +3,9 @@ import Foundation
 enum RealtimeServiceEvent: Sendable {
     case sessionReady(String)
     case inputTranscriptChanged(String)
+    case inputTranscriptFinalized(String)
     case outputTextChanged(String)
+    case outputTextFinalized(String)
     case transportLost(String)
 }
 

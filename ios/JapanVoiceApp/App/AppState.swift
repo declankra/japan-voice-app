@@ -20,12 +20,16 @@ final class AppState {
     var screen: Screen = .home
     var session = ConversationSession()
     var lastBootstrap: RealtimeBootstrap?
+    var conversationHistory: [ConversationThread] = []
 
     @ObservationIgnored
     private let workerClient: WorkerClient
 
     @ObservationIgnored
     private let realtimeService: any RealtimeService
+
+    @ObservationIgnored
+    private let conversationStore: ConversationStore
 
     @ObservationIgnored
     private var bootstrapTask: Task<Void, Never>?
@@ -42,15 +46,29 @@ final class AppState {
     @ObservationIgnored
     private var userPaused = false
 
+    @ObservationIgnored
+    private var conversationStartedAt: Date?
+
+    @ObservationIgnored
+    private var currentTurns: [ConversationTurn] = []
+
+    @ObservationIgnored
+    private var pendingTurnSpeaker: ActiveSpeaker?
+
+    @ObservationIgnored
+    private var pendingSourceTranscript = ""
+
     private var logSessionID: String {
         session.sessionId ?? lastBootstrap?.session.id ?? "pending"
     }
 
     init(
         workerClient: WorkerClient = WorkerClient(),
-        realtimeService: (any RealtimeService)? = nil
+        realtimeService: (any RealtimeService)? = nil,
+        conversationStore: ConversationStore = ConversationStore()
     ) {
         self.workerClient = workerClient
+        self.conversationStore = conversationStore
 
         let service = realtimeService ?? OpenAIRealtimeService()
         self.realtimeService = service
@@ -60,6 +78,11 @@ final class AppState {
                     self?.handleRealtimeEvent(event)
                 }
             }
+        }
+
+        Task { [weak self] in
+            guard let self else { return }
+            conversationHistory = await conversationStore.loadThreads()
         }
     }
 
@@ -77,6 +100,10 @@ final class AppState {
             connectionState: .bootstrapping,
             statusMessage: "Connecting…"
         )
+        conversationStartedAt = .now
+        currentTurns = []
+        pendingTurnSpeaker = nil
+        pendingSourceTranscript = ""
         screen = .conversation
 
         bootstrapTask = Task { [weak self] in
@@ -86,6 +113,7 @@ final class AppState {
     }
 
     func endConversation() {
+        finalizeCurrentThreadIfNeeded()
         cancelPendingTasks()
         userPaused = false
         shouldReconnectOnForeground = false
@@ -93,6 +121,10 @@ final class AppState {
         lastBootstrap = nil
         screen = .home
         session = ConversationSession()
+        conversationStartedAt = nil
+        currentTurns = []
+        pendingTurnSpeaker = nil
+        pendingSourceTranscript = ""
 
         logger.log("Conversation ended for session \(self.logSessionID, privacy: .public)")
 
@@ -246,10 +278,28 @@ final class AppState {
             session.statusMessage = "Listening live."
 
         case .inputTranscriptChanged(let text):
-            session.applyInputTranscript(text)
+            let currentSpeaker = pendingTurnSpeaker ?? session.activeSpeaker
+            if pendingTurnSpeaker == nil, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                pendingTurnSpeaker = currentSpeaker
+            }
+            let speaker = pendingTurnSpeaker ?? currentSpeaker
+            session.updateInputTranscript(text, for: speaker)
+
+        case .inputTranscriptFinalized(let text):
+            let speaker = pendingTurnSpeaker ?? session.activeSpeaker
+            pendingTurnSpeaker = speaker
+            pendingSourceTranscript = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            session.finalizeInputTranscript(text, for: speaker)
 
         case .outputTextChanged(let text):
-            session.applyTranslatedOutput(text)
+            let outputSpeaker = outputSpeakerForCurrentTurn()
+            session.updateLiveOutput(text, for: outputSpeaker)
+
+        case .outputTextFinalized(let text):
+            let outputSpeaker = outputSpeakerForCurrentTurn()
+            session.commitOutput(text, for: outputSpeaker)
+            session.clearInputTranscript(for: pendingTurnSpeaker ?? session.activeSpeaker)
+            appendCompletedTurn(with: text, outputSpeaker: outputSpeaker)
 
         case .transportLost(let reason):
             guard !userPaused, session.connectionState != .paused else { return }
@@ -293,7 +343,6 @@ final class AppState {
                     session.sessionId = bootstrap.session.id
                     session.connectionState = .ready
                     session.statusMessage = "Listening live."
-                    session.resetSurfaceCopy()
                     logger.log("Reconnect succeeded for session \(bootstrap.session.id, privacy: .public) on attempt \(attempt)")
                     reconnectTask = nil
                     return
@@ -413,6 +462,46 @@ final class AppState {
             return true
         case .idle, .paused, .failed(_):
             return false
+        }
+    }
+
+    private func outputSpeakerForCurrentTurn() -> ActiveSpeaker {
+        let speaker = pendingTurnSpeaker ?? session.activeSpeaker
+        return speaker == .localUser ? .conversationPartner : .localUser
+    }
+
+    private func appendCompletedTurn(with translatedText: String, outputSpeaker: ActiveSpeaker) {
+        let trimmedTranslation = translatedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTranslation.isEmpty else { return }
+
+        let turnSpeaker = pendingTurnSpeaker ?? (outputSpeaker == .localUser ? .conversationPartner : .localUser)
+        let turn = ConversationTurn(
+            speaker: turnSpeaker,
+            sourceText: pendingSourceTranscript,
+            translatedText: trimmedTranslation,
+            createdAt: .now
+        )
+
+        currentTurns.append(turn)
+        pendingTurnSpeaker = nil
+        pendingSourceTranscript = ""
+    }
+
+    private func finalizeCurrentThreadIfNeeded() {
+        guard !currentTurns.isEmpty else { return }
+
+        let thread = ConversationThread(
+            startedAt: conversationStartedAt ?? .now,
+            endedAt: .now,
+            turns: currentTurns
+        )
+
+        guard thread.hasTranscript else { return }
+
+        conversationHistory.insert(thread, at: 0)
+
+        Task { [thread, conversationStore] in
+            await conversationStore.appendThread(thread)
         }
     }
 }

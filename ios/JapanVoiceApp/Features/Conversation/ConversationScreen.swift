@@ -54,87 +54,103 @@ struct ConversationScreen: View {
     }
 
     private var centerOverlay: some View {
-        VStack(spacing: 14) {
-            VStack(spacing: 4) {
-                Text(appState.session.directionLabel)
-                    .font(.system(size: 12, weight: .semibold))
-                    .tracking(1.2)
-                    .foregroundStyle(AppTheme.primaryText.opacity(0.82))
+        ZStack {
+            transportStatus
+                .offset(y: AppTheme.transportStatusVerticalOffset)
 
-                Text(displayedStatusMessage)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(AppTheme.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(AppTheme.statusCapsuleDark)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(AppTheme.statusBorder, lineWidth: 1)
-                    )
-            )
-
-            ZStack {
-                Circle()
-                    .trim(from: 0, to: holdProgress)
-                    .stroke(
-                        AppTheme.primaryText,
-                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .frame(width: 122, height: 122)
-                    .opacity(isHoldingExit ? 1 : 0)
-
-                Circle()
-                    .fill(AppTheme.controlFill)
-                    .frame(width: 108, height: 108)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.black.opacity(0.14), lineWidth: 1)
-                    )
-
-                Image(systemName: transportSymbolName)
-                    .font(.system(size: 34, weight: .medium))
-                    .foregroundStyle(Color.black)
-            }
-            .contentShape(Circle())
-            .scaleEffect(isHoldingExit ? 1.03 : 1)
-            .animation(.easeOut(duration: 0.18), value: isHoldingExit)
-            .onTapGesture {
-                appState.togglePause()
-            }
-            .onLongPressGesture(
-                minimumDuration: 1.5,
-                maximumDistance: 36,
-                pressing: { pressing in
-                    isHoldingExit = pressing
-
-                    if pressing {
-                        withAnimation(.linear(duration: 1.5)) {
-                            holdProgress = 1
-                        }
-                    } else {
-                        withAnimation(.easeOut(duration: 0.18)) {
-                            holdProgress = 0
-                        }
-                    }
-                },
-                perform: {
-                    holdProgress = 0
-                    isHoldingExit = false
-                    appState.endConversation()
-                }
-            )
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(transportAccessibilityLabel)
-            .accessibilityValue(transportAccessibilityValue)
-            .accessibilityHint(transportAccessibilityHint)
+            transportControl
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 24)
+    }
+
+    private var transportStatus: some View {
+        VStack(spacing: 4) {
+            Text(appState.session.directionLabel)
+                .font(.system(size: 12, weight: .semibold))
+                .tracking(1.2)
+                .foregroundStyle(AppTheme.primaryText.opacity(0.82))
+
+            Text(displayedStatusMessage)
+                .font(.system(size: 13, weight: .regular))
+                .foregroundStyle(AppTheme.secondaryText)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(AppTheme.statusCapsuleDark)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(AppTheme.statusBorder, lineWidth: 1)
+                )
+        )
+    }
+
+    private var transportControl: some View {
+        ZStack {
+            Circle()
+                .trim(from: 0, to: holdProgress)
+                .stroke(
+                    AppTheme.primaryText,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .frame(
+                    width: AppTheme.transportControlProgressDiameter,
+                    height: AppTheme.transportControlProgressDiameter
+                )
+                .opacity(isHoldingExit ? 1 : 0)
+
+            Circle()
+                .fill(AppTheme.controlFill)
+                .frame(
+                    width: AppTheme.transportControlDiameter,
+                    height: AppTheme.transportControlDiameter
+                )
+                .overlay(
+                    Circle()
+                        .stroke(Color.black.opacity(0.14), lineWidth: 1)
+                )
+
+            Image(systemName: transportSymbolName)
+                .font(.system(size: AppTheme.transportControlIconSize, weight: .medium))
+                .foregroundStyle(Color.black)
+        }
+        .contentShape(Circle())
+        .scaleEffect(isHoldingExit ? 1.03 : 1)
+        .animation(.easeOut(duration: 0.18), value: isHoldingExit)
+        .onTapGesture {
+            appState.togglePause()
+        }
+        .onLongPressGesture(
+            minimumDuration: 1.5,
+            maximumDistance: 36,
+            pressing: { pressing in
+                isHoldingExit = pressing
+
+                if pressing {
+                    withAnimation(.linear(duration: 1.5)) {
+                        holdProgress = 1
+                    }
+                } else {
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        holdProgress = 0
+                    }
+                }
+            },
+            perform: {
+                holdProgress = 0
+                isHoldingExit = false
+                appState.endConversation()
+            }
+        )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(transportAccessibilityLabel)
+        .accessibilityValue(transportAccessibilityValue)
+        .accessibilityHint(transportAccessibilityHint)
     }
 
     private var displayedStatusMessage: String {
@@ -230,28 +246,27 @@ struct ConversationScreen: View {
 
             VStack(alignment: alignment, spacing: 12) {
                 if isFlipped {
-                    hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
+                    if isActive {
+                        hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
+                    }
                     Spacer(minLength: 0)
                     metadataBlock(title: title, subtitle: subtitle, secondary: secondary, alignment: alignment)
-                    heroBlock(
-                        speaker: speaker,
-                        isActive: isActive,
-                        secondary: secondary,
-                        textAlignment: textAlignment,
-                        alignment: alignment
-                    )
                 } else {
                     metadataBlock(title: title, subtitle: subtitle, secondary: secondary, alignment: alignment)
-                    hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
+                    if isActive {
+                        hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
+                    }
                     Spacer(minLength: 0)
-                    heroBlock(
-                        speaker: speaker,
-                        isActive: isActive,
-                        secondary: secondary,
-                        textAlignment: textAlignment,
-                        alignment: alignment
-                    )
                 }
+
+                surfaceContentBlock(
+                    speaker: speaker,
+                    isActive: isActive,
+                    primary: primary,
+                    secondary: secondary,
+                    textAlignment: textAlignment,
+                    alignment: alignment
+                )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, 28)
@@ -336,24 +351,6 @@ struct ConversationScreen: View {
         speaker == .localUser ? "English" : "Japanese"
     }
 
-    private func primaryPaneCopy(for speaker: ActiveSpeaker, isActive: Bool) -> String {
-        switch speaker {
-        case .localUser:
-            return appState.session.localPrimaryText
-        case .conversationPartner:
-            return appState.session.partnerPrimaryText
-        }
-    }
-
-    private func secondaryPaneCopy(for speaker: ActiveSpeaker, isActive: Bool) -> String {
-        switch speaker {
-        case .localUser:
-            return appState.session.localSecondaryText
-        case .conversationPartner:
-            return appState.session.partnerSecondaryText
-        }
-    }
-
     @ViewBuilder
     private func metadataBlock(
         title: String,
@@ -373,24 +370,108 @@ struct ConversationScreen: View {
     }
 
     @ViewBuilder
-    private func heroBlock(
+    private func surfaceContentBlock(
         speaker: ActiveSpeaker,
         isActive: Bool,
+        primary: Color,
         secondary: Color,
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
-        VStack(alignment: alignment, spacing: 10) {
-            Text(primaryPaneCopy(for: speaker, isActive: isActive))
-                .font(.system(size: 52, weight: .medium))
-                .minimumScaleFactor(0.56)
-                .lineLimit(2)
+        if isActive {
+            activeInputBlock(
+                speaker: speaker,
+                secondary: secondary,
+                textAlignment: textAlignment,
+                alignment: alignment
+            )
+        } else {
+            teleprompterBlock(
+                speaker: speaker,
+                primary: primary,
+                secondary: secondary,
+                textAlignment: textAlignment,
+                alignment: alignment
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func activeInputBlock(
+        speaker: ActiveSpeaker,
+        secondary: Color,
+        textAlignment: TextAlignment,
+        alignment: HorizontalAlignment
+    ) -> some View {
+        VStack(alignment: alignment, spacing: 12) {
+            Text(appState.session.inputText(for: speaker))
+                .font(.system(size: 46, weight: .medium))
+                .minimumScaleFactor(0.48)
+                .lineLimit(4)
                 .multilineTextAlignment(textAlignment)
 
-            Text(secondaryPaneCopy(for: speaker, isActive: isActive))
+            Text(appState.session.inputSecondaryText(for: speaker))
                 .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(secondary)
                 .multilineTextAlignment(textAlignment)
+        }
+    }
+
+    @ViewBuilder
+    private func teleprompterBlock(
+        speaker: ActiveSpeaker,
+        primary: Color,
+        secondary: Color,
+        textAlignment: TextAlignment,
+        alignment: HorizontalAlignment
+    ) -> some View {
+        let committedLines = appState.session.outputLines(for: speaker)
+        let liveOutputText = appState.session.liveOutputText(for: speaker)
+        let visibleCommittedLines = Array(committedLines.suffix(6))
+        let hasAnyOutput = !visibleCommittedLines.isEmpty || !liveOutputText.isEmpty
+
+        VStack(alignment: alignment, spacing: 12) {
+            if !hasAnyOutput {
+                Text("Translation appears here.")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(secondary)
+                    .multilineTextAlignment(textAlignment)
+            } else {
+                VStack(alignment: alignment, spacing: 10) {
+                    ForEach(Array(visibleCommittedLines.enumerated()), id: \.element.id) { index, line in
+                        let age = CGFloat(visibleCommittedLines.count - index)
+                        let normalizedAge = max(0, min(age / CGFloat(max(visibleCommittedLines.count, 1)), 1))
+
+                        Text(line.text)
+                            .font(.system(size: 22, weight: .regular))
+                            .foregroundStyle(primary.opacity(0.24 + ((1 - normalizedAge) * 0.42)))
+                            .blur(radius: normalizedAge * 1.6)
+                            .multilineTextAlignment(textAlignment)
+                            .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
+                    }
+
+                    if !liveOutputText.isEmpty {
+                        Text(liveOutputText)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(primary)
+                            .multilineTextAlignment(textAlignment)
+                            .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .white.opacity(0.75), location: 0.18),
+                            .init(color: .white, location: 0.4),
+                            .init(color: .white, location: 1)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
         }
     }
 
