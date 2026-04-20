@@ -262,6 +262,7 @@ struct ConversationScreen: View {
                 surfaceContentBlock(
                     speaker: speaker,
                     isActive: isActive,
+                    isFlipped: isFlipped,
                     primary: primary,
                     secondary: secondary,
                     textAlignment: textAlignment,
@@ -406,6 +407,7 @@ struct ConversationScreen: View {
     private func surfaceContentBlock(
         speaker: ActiveSpeaker,
         isActive: Bool,
+        isFlipped: Bool,
         primary: Color,
         secondary: Color,
         textAlignment: TextAlignment,
@@ -414,6 +416,7 @@ struct ConversationScreen: View {
         if isActive {
             activeInputBlock(
                 speaker: speaker,
+                isFlipped: isFlipped,
                 secondary: secondary,
                 textAlignment: textAlignment,
                 alignment: alignment
@@ -421,6 +424,7 @@ struct ConversationScreen: View {
         } else {
             teleprompterBlock(
                 speaker: speaker,
+                isFlipped: isFlipped,
                 primary: primary,
                 secondary: secondary,
                 textAlignment: textAlignment,
@@ -432,12 +436,14 @@ struct ConversationScreen: View {
     @ViewBuilder
     private func activeInputBlock(
         speaker: ActiveSpeaker,
+        isFlipped: Bool,
         secondary: Color,
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
         let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
+        let readableEdgePadding = isFlipped ? 132.0 : 0
 
         VStack(alignment: alignment, spacing: 12) {
             Text(appState.session.inputText(for: speaker))
@@ -453,12 +459,14 @@ struct ConversationScreen: View {
                 .multilineTextAlignment(textAlignment)
                 .frame(maxWidth: .infinity, alignment: textFrameAlignment)
         }
+        .padding(.bottom, readableEdgePadding)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
     }
 
     @ViewBuilder
     private func teleprompterBlock(
         speaker: ActiveSpeaker,
+        isFlipped: Bool,
         primary: Color,
         secondary: Color,
         textAlignment: TextAlignment,
@@ -470,12 +478,14 @@ struct ConversationScreen: View {
         let hasAnyOutput = !committedLines.isEmpty || !liveOutputText.isEmpty
         let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
+        let readableEdgePadding = isFlipped ? 132.0 : 0
 
         if !hasAnyOutput {
             Text("Translation appears here.")
                 .font(.system(size: 20, weight: .regular))
                 .foregroundStyle(secondary)
                 .multilineTextAlignment(textAlignment)
+                .padding(.bottom, readableEdgePadding)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
         } else {
             ScrollViewReader { proxy in
@@ -504,6 +514,7 @@ struct ConversationScreen: View {
                     }
                     .frame(maxWidth: .infinity, alignment: textFrameAlignment)
                     .padding(.vertical, 4)
+                    .padding(.bottom, readableEdgePadding)
                 }
                 .defaultScrollAnchor(.bottom)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
