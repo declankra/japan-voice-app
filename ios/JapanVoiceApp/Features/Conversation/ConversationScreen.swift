@@ -11,20 +11,23 @@ struct ConversationScreen: View {
     @State private var transientMessage: String?
     @State private var transientTask: Task<Void, Never>?
 
+    private let teleprompterLiveId = "teleprompter-live-output"
+
     var body: some View {
         GeometryReader { proxy in
             let dividerHeight: CGFloat = 1
             let paneHeight = (proxy.size.height - dividerHeight) / 2
+            let safeAreaInsets = proxy.safeAreaInsets
 
             ZStack {
                 VStack(spacing: 0) {
                     speakerPane(
-                        title: "Other Person",
-                        subtitle: "Japanese speaker",
+                        title: "Japanese Speaker",
                         speaker: .conversationPartner,
                         isFlipped: true,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
-                        dragProgress: topDragProgress
+                        dragProgress: topDragProgress,
+                        contentInsets: paneContentInsets(isFlipped: true, safeAreaInsets: safeAreaInsets)
                     )
 
                     Rectangle()
@@ -32,12 +35,12 @@ struct ConversationScreen: View {
                         .frame(height: dividerHeight)
 
                     speakerPane(
-                        title: "You",
-                        subtitle: "English speaker",
+                        title: "English Speaker",
                         speaker: .localUser,
                         isFlipped: false,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
-                        dragProgress: bottomDragProgress
+                        dragProgress: bottomDragProgress,
+                        contentInsets: paneContentInsets(isFlipped: false, safeAreaInsets: safeAreaInsets)
                     )
                 }
                 .frame(width: proxy.size.width, height: proxy.size.height)
@@ -225,13 +228,14 @@ struct ConversationScreen: View {
         }
     }
 
+    @ViewBuilder
     private func speakerPane(
         title: String,
-        subtitle: String,
         speaker: ActiveSpeaker,
         isFlipped: Bool,
         size: CGSize,
-        dragProgress: CGFloat
+        dragProgress: CGFloat,
+        contentInsets: EdgeInsets
     ) -> some View {
         let isActive = appState.session.activeSpeaker == speaker
         let background = isActive ? AppTheme.activePane : AppTheme.inactivePane
@@ -241,23 +245,19 @@ struct ConversationScreen: View {
         let alignment: HorizontalAlignment = isFlipped ? .trailing : .leading
         let textAlignment: TextAlignment = isFlipped ? .trailing : .leading
 
-        return ZStack {
+        let pane = ZStack {
             background
 
-            VStack(alignment: alignment, spacing: 12) {
-                if isFlipped {
-                    if isActive {
-                        hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
-                    }
-                    Spacer(minLength: 0)
-                    metadataBlock(title: title, subtitle: subtitle, secondary: secondary, alignment: alignment)
-                } else {
-                    metadataBlock(title: title, subtitle: subtitle, secondary: secondary, alignment: alignment)
-                    if isActive {
-                        hintBadge(primary: primary, isActive: isActive, handoffSymbol: handoffSymbol, dragProgress: dragProgress)
-                    }
-                    Spacer(minLength: 0)
-                }
+            VStack(alignment: alignment, spacing: 14) {
+                headerBlock(
+                    title: title,
+                    isActive: isActive,
+                    primary: primary,
+                    secondary: secondary,
+                    handoffSymbol: handoffSymbol,
+                    dragProgress: dragProgress,
+                    alignment: alignment
+                )
 
                 surfaceContentBlock(
                     speaker: speaker,
@@ -269,8 +269,7 @@ struct ConversationScreen: View {
                 )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(.horizontal, 28)
-            .padding(.vertical, 26)
+            .padding(contentInsets)
             .foregroundStyle(primary)
             .rotationEffect(isFlipped ? .degrees(180) : .zero)
         }
@@ -279,12 +278,37 @@ struct ConversationScreen: View {
         .onTapGesture {
             appState.selectSpeaker(speaker)
         }
-        .gesture(handoffGesture(for: speaker, isFlipped: isFlipped, height: size.height))
+
+        Group {
+            if isActive {
+                pane.gesture(handoffGesture(for: speaker, isFlipped: isFlipped, height: size.height))
+            } else {
+                pane
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(isActive ? "Listening surface" : "Output surface"), \(speakerLanguage(for: speaker))")
         .accessibilityValue(isActive ? "Selected." : "Not selected.")
         .accessibilityHint("Double-tap to make \(title) active. Swipe \(isFlipped ? "down" : "up") to hand off.")
         .accessibilityAddTraits(isActive ? .isSelected : AccessibilityTraits())
+    }
+
+    private func paneContentInsets(isFlipped: Bool, safeAreaInsets: EdgeInsets) -> EdgeInsets {
+        let horizontalInset: CGFloat = 24
+        let verticalInset: CGFloat = 20
+        let screenEdgeInset = max(
+            verticalInset,
+            (isFlipped ? safeAreaInsets.top : safeAreaInsets.bottom) + 12
+        )
+
+        // The upper pane is rotated 180°, so extra clearance for the screen edge
+        // must be applied to the pre-rotation bottom inset.
+        return EdgeInsets(
+            top: verticalInset,
+            leading: horizontalInset,
+            bottom: screenEdgeInset,
+            trailing: horizontalInset
+        )
     }
 
     private func handoffGesture(for speaker: ActiveSpeaker, isFlipped: Bool, height: CGFloat) -> some Gesture {
@@ -352,21 +376,30 @@ struct ConversationScreen: View {
     }
 
     @ViewBuilder
-    private func metadataBlock(
+    private func headerBlock(
         title: String,
-        subtitle: String,
+        isActive: Bool,
+        primary: Color,
         secondary: Color,
+        handoffSymbol: String,
+        dragProgress: CGFloat,
         alignment: HorizontalAlignment
     ) -> some View {
-        VStack(alignment: alignment, spacing: 6) {
+        VStack(alignment: alignment, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(secondary)
 
-            Text(subtitle)
-                .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(secondary)
+            if isActive {
+                hintBadge(
+                    primary: primary,
+                    isActive: isActive,
+                    handoffSymbol: handoffSymbol,
+                    dragProgress: dragProgress
+                )
+            }
         }
+        .frame(maxWidth: .infinity, alignment: alignment == .trailing ? .trailing : .leading)
     }
 
     @ViewBuilder
@@ -403,18 +436,24 @@ struct ConversationScreen: View {
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
+        let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
+        let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
+
         VStack(alignment: alignment, spacing: 12) {
             Text(appState.session.inputText(for: speaker))
                 .font(.system(size: 46, weight: .medium))
-                .minimumScaleFactor(0.48)
-                .lineLimit(4)
+                .minimumScaleFactor(0.42)
+                .lineLimit(6)
                 .multilineTextAlignment(textAlignment)
+                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
 
             Text(appState.session.inputSecondaryText(for: speaker))
                 .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(secondary)
                 .multilineTextAlignment(textAlignment)
+                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
     }
 
     @ViewBuilder
@@ -427,50 +466,86 @@ struct ConversationScreen: View {
     ) -> some View {
         let committedLines = appState.session.outputLines(for: speaker)
         let liveOutputText = appState.session.liveOutputText(for: speaker)
-        let visibleCommittedLines = Array(committedLines.suffix(6))
-        let hasAnyOutput = !visibleCommittedLines.isEmpty || !liveOutputText.isEmpty
+        let latestCommittedLineID = committedLines.last?.id
+        let hasAnyOutput = !committedLines.isEmpty || !liveOutputText.isEmpty
+        let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
+        let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
 
-        VStack(alignment: alignment, spacing: 12) {
-            if !hasAnyOutput {
-                Text("Translation appears here.")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(secondary)
-                    .multilineTextAlignment(textAlignment)
-            } else {
-                VStack(alignment: alignment, spacing: 10) {
-                    ForEach(Array(visibleCommittedLines.enumerated()), id: \.element.id) { index, line in
-                        let age = CGFloat(visibleCommittedLines.count - index)
-                        let normalizedAge = max(0, min(age / CGFloat(max(visibleCommittedLines.count, 1)), 1))
+        if !hasAnyOutput {
+            Text("Translation appears here.")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(secondary)
+                .multilineTextAlignment(textAlignment)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView(.vertical, showsIndicators: false) {
+                    LazyVStack(alignment: alignment, spacing: 14) {
+                        ForEach(Array(committedLines.enumerated()), id: \.element.id) { index, line in
+                            let distanceFromLatest = CGFloat(committedLines.count - 1 - index)
+                            let opacity = max(0.5, 1 - (distanceFromLatest * 0.08))
 
-                        Text(line.text)
-                            .font(.system(size: 22, weight: .regular))
-                            .foregroundStyle(primary.opacity(0.24 + ((1 - normalizedAge) * 0.42)))
-                            .blur(radius: normalizedAge * 1.6)
-                            .multilineTextAlignment(textAlignment)
-                            .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
+                            Text(line.text)
+                                .font(.system(size: 22, weight: .regular))
+                                .foregroundStyle(primary.opacity(opacity))
+                                .multilineTextAlignment(textAlignment)
+                                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+                                .id(line.id)
+                        }
+
+                        if !liveOutputText.isEmpty {
+                            Text(liveOutputText)
+                                .font(.system(size: 32, weight: .semibold))
+                                .foregroundStyle(primary)
+                                .multilineTextAlignment(textAlignment)
+                                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+                                .id(teleprompterLiveId)
+                        }
                     }
-
-                    if !liveOutputText.isEmpty {
-                        Text(liveOutputText)
-                            .font(.system(size: 36, weight: .semibold))
-                            .foregroundStyle(primary)
-                            .multilineTextAlignment(textAlignment)
-                            .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
-                    }
+                    .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+                    .padding(.vertical, 4)
                 }
-                .frame(maxWidth: .infinity, alignment: textAlignment == .leading ? .leading : .trailing)
-                .mask(
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: 0),
-                            .init(color: .white.opacity(0.75), location: 0.18),
-                            .init(color: .white, location: 0.4),
-                            .init(color: .white, location: 1)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
+                .defaultScrollAnchor(.bottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onChange(of: liveOutputText) { _, newValue in
+                    guard !newValue.isEmpty else {
+                        return
+                    }
+
+                    scrollTeleprompterToLatest(
+                        proxy: proxy,
+                        latestCommittedLineID: latestCommittedLineID,
+                        hasLive: true
                     )
-                )
+                }
+                .onChange(of: committedLines.count) { oldCount, newCount in
+                    guard newCount > oldCount else {
+                        return
+                    }
+
+                    scrollTeleprompterToLatest(
+                        proxy: proxy,
+                        latestCommittedLineID: latestCommittedLineID,
+                        hasLive: !liveOutputText.isEmpty
+                    )
+                }
+            }
+        }
+    }
+
+    private func scrollTeleprompterToLatest(
+        proxy: ScrollViewProxy,
+        latestCommittedLineID: TeleprompterLine.ID?,
+        hasLive: Bool
+    ) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+
+        withTransaction(transaction) {
+            if hasLive {
+                proxy.scrollTo(teleprompterLiveId, anchor: .bottom)
+            } else if let latestCommittedLineID {
+                proxy.scrollTo(latestCommittedLineID, anchor: .bottom)
             }
         }
     }
