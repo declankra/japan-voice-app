@@ -22,7 +22,8 @@ struct ConversationScreen: View {
             ZStack {
                 VStack(spacing: 0) {
                     speakerPane(
-                        title: "Japanese Speaker",
+                        title: "Japanese reader",
+                        listeningLabel: "聞き取り中",
                         speaker: .conversationPartner,
                         isFlipped: true,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
@@ -35,7 +36,8 @@ struct ConversationScreen: View {
                         .frame(height: dividerHeight)
 
                     speakerPane(
-                        title: "English Speaker",
+                        title: "English reader",
+                        listeningLabel: "Listening",
                         speaker: .localUser,
                         isFlipped: false,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
@@ -73,7 +75,6 @@ struct ConversationScreen: View {
         VStack(spacing: 4) {
             Text(appState.session.directionLabel)
                 .font(.system(size: 12, weight: .semibold))
-                .tracking(1.2)
                 .foregroundStyle(AppTheme.primaryText.opacity(0.82))
 
             Text(displayedStatusMessage)
@@ -246,6 +247,7 @@ struct ConversationScreen: View {
     @ViewBuilder
     private func speakerPane(
         title: String,
+        listeningLabel: String,
         speaker: ActiveSpeaker,
         isFlipped: Bool,
         size: CGSize,
@@ -264,20 +266,12 @@ struct ConversationScreen: View {
             background
 
             VStack(alignment: alignment, spacing: 14) {
-                headerBlock(
-                    title: title,
-                    isActive: isActive,
-                    primary: primary,
-                    secondary: secondary,
-                    handoffSymbol: handoffSymbol,
-                    dragProgress: dragProgress,
-                    alignment: alignment
-                )
-
                 surfaceContentBlock(
                     speaker: speaker,
                     isActive: isActive,
-                    isFlipped: isFlipped,
+                    listeningLabel: listeningLabel,
+                    handoffSymbol: handoffSymbol,
+                    dragProgress: dragProgress,
                     primary: primary,
                     secondary: secondary,
                     textAlignment: textAlignment,
@@ -292,7 +286,8 @@ struct ConversationScreen: View {
         .frame(width: size.width, height: size.height)
         .contentShape(Rectangle())
         .onTapGesture {
-            appState.selectSpeaker(speaker)
+            hasSeenHandoffHint = true
+            appState.selectSpeaker(oppositeSpeaker(for: appState.session.activeSpeaker))
         }
 
         Group {
@@ -305,7 +300,7 @@ struct ConversationScreen: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(title), \(isActive ? "Listening surface" : "Output surface"), \(speakerLanguage(for: speaker))")
         .accessibilityValue(isActive ? "Selected." : "Not selected.")
-        .accessibilityHint("Double-tap to make \(title) active. Swipe \(isFlipped ? "down" : "up") to hand off.")
+        .accessibilityHint("Double-tap to switch who the app listens for. Swipe \(isFlipped ? "down" : "up") from the active side to hand off.")
         .accessibilityAddTraits(isActive ? .isSelected : AccessibilityTraits())
     }
 
@@ -392,37 +387,12 @@ struct ConversationScreen: View {
     }
 
     @ViewBuilder
-    private func headerBlock(
-        title: String,
-        isActive: Bool,
-        primary: Color,
-        secondary: Color,
-        handoffSymbol: String,
-        dragProgress: CGFloat,
-        alignment: HorizontalAlignment
-    ) -> some View {
-        VStack(alignment: alignment, spacing: 8) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(secondary)
-
-            if isActive {
-                hintBadge(
-                    primary: primary,
-                    isActive: isActive,
-                    handoffSymbol: handoffSymbol,
-                    dragProgress: dragProgress
-                )
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: alignment == .trailing ? .trailing : .leading)
-    }
-
-    @ViewBuilder
     private func surfaceContentBlock(
         speaker: ActiveSpeaker,
         isActive: Bool,
-        isFlipped: Bool,
+        listeningLabel: String,
+        handoffSymbol: String,
+        dragProgress: CGFloat,
         primary: Color,
         secondary: Color,
         textAlignment: TextAlignment,
@@ -430,8 +400,9 @@ struct ConversationScreen: View {
     ) -> some View {
         if isActive {
             activeInputBlock(
-                speaker: speaker,
-                isFlipped: isFlipped,
+                listeningLabel: listeningLabel,
+                handoffSymbol: handoffSymbol,
+                dragProgress: dragProgress,
                 secondary: secondary,
                 textAlignment: textAlignment,
                 alignment: alignment
@@ -439,9 +410,7 @@ struct ConversationScreen: View {
         } else {
             teleprompterBlock(
                 speaker: speaker,
-                isFlipped: isFlipped,
                 primary: primary,
-                secondary: secondary,
                 textAlignment: textAlignment,
                 alignment: alignment
             )
@@ -450,40 +419,44 @@ struct ConversationScreen: View {
 
     @ViewBuilder
     private func activeInputBlock(
-        speaker: ActiveSpeaker,
-        isFlipped: Bool,
+        listeningLabel: String,
+        handoffSymbol: String,
+        dragProgress: CGFloat,
         secondary: Color,
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
         let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
-        let readableEdgePadding = isFlipped ? 132.0 : 0
 
-        VStack(alignment: alignment, spacing: 12) {
-            Text(appState.session.inputText(for: speaker))
-                .font(.system(size: 46, weight: .medium))
-                .minimumScaleFactor(0.42)
-                .lineLimit(6)
-                .multilineTextAlignment(textAlignment)
-                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+        VStack(alignment: alignment, spacing: 10) {
+            HStack(spacing: 8) {
+                if !hasSeenHandoffHint {
+                    Image(systemName: handoffSymbol)
+                        .opacity(0.58 + (dragProgress * 0.42))
+                }
 
-            Text(appState.session.inputSecondaryText(for: speaker))
-                .font(.system(size: 16, weight: .regular))
-                .foregroundStyle(secondary)
-                .multilineTextAlignment(textAlignment)
+                Text(listeningLabel)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.74)
+            }
+            .font(.system(size: 17, weight: .medium))
+            .multilineTextAlignment(textAlignment)
+            .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+
+            Capsule()
+                .fill(secondary.opacity(0.35))
+                .frame(width: 46, height: 3)
                 .frame(maxWidth: .infinity, alignment: textFrameAlignment)
         }
-        .padding(.bottom, readableEdgePadding)
+        .opacity(0.58)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
     }
 
     @ViewBuilder
     private func teleprompterBlock(
         speaker: ActiveSpeaker,
-        isFlipped: Bool,
         primary: Color,
-        secondary: Color,
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
@@ -493,14 +466,9 @@ struct ConversationScreen: View {
         let hasAnyOutput = !committedLines.isEmpty || !liveOutputText.isEmpty
         let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
-        let readableEdgePadding = isFlipped ? 132.0 : 0
 
         if !hasAnyOutput {
-            Text("Translation appears here.")
-                .font(.system(size: 20, weight: .regular))
-                .foregroundStyle(secondary)
-                .multilineTextAlignment(textAlignment)
-                .padding(.bottom, readableEdgePadding)
+            Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
         } else {
             ScrollViewReader { proxy in
@@ -508,28 +476,31 @@ struct ConversationScreen: View {
                     LazyVStack(alignment: alignment, spacing: 14) {
                         ForEach(Array(committedLines.enumerated()), id: \.element.id) { index, line in
                             let distanceFromLatest = CGFloat(committedLines.count - 1 - index)
-                            let opacity = max(0.5, 1 - (distanceFromLatest * 0.08))
+                            let opacity = max(0.42, 1 - (distanceFromLatest * 0.14))
 
                             Text(line.text)
-                                .font(.system(size: 22, weight: .regular))
+                                .font(.system(size: 24, weight: .regular))
                                 .foregroundStyle(primary.opacity(opacity))
                                 .multilineTextAlignment(textAlignment)
+                                .lineLimit(3)
+                                .minimumScaleFactor(0.78)
                                 .frame(maxWidth: .infinity, alignment: textFrameAlignment)
                                 .id(line.id)
                         }
 
                         if !liveOutputText.isEmpty {
                             Text(liveOutputText)
-                                .font(.system(size: 32, weight: .semibold))
+                                .font(.system(size: 42, weight: .semibold))
                                 .foregroundStyle(primary)
                                 .multilineTextAlignment(textAlignment)
+                                .lineLimit(5)
+                                .minimumScaleFactor(0.56)
                                 .frame(maxWidth: .infinity, alignment: textFrameAlignment)
                                 .id(teleprompterLiveId)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: textFrameAlignment)
                     .padding(.vertical, 4)
-                    .padding(.bottom, readableEdgePadding)
                 }
                 .defaultScrollAnchor(.bottom)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -573,34 +544,6 @@ struct ConversationScreen: View {
             } else if let latestCommittedLineID {
                 proxy.scrollTo(latestCommittedLineID, anchor: .bottom)
             }
-        }
-    }
-
-    @ViewBuilder
-    private func hintBadge(
-        primary: Color,
-        isActive: Bool,
-        handoffSymbol: String,
-        dragProgress: CGFloat
-    ) -> some View {
-        if isActive && !hasSeenHandoffHint {
-            HStack(spacing: 8) {
-                Image(systemName: handoffSymbol)
-                Text("Swipe to hand off")
-            }
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(primary.opacity(0.82))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(AppTheme.statusCapsuleLight)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(primary.opacity(0.12), lineWidth: 1)
-            )
-            .opacity(0.58 + (dragProgress * 0.42))
         }
     }
 
