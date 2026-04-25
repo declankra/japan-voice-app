@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ConversationScreen: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("conversation.hasSeenHandoffHint") private var hasSeenHandoffHint = false
 
     @State private var topDragProgress: CGFloat = 0
@@ -12,18 +13,21 @@ struct ConversationScreen: View {
     @State private var transientTask: Task<Void, Never>?
 
     private let teleprompterLiveId = "teleprompter-live-output"
+    private let handoffCommitThreshold: CGFloat = 0.4
 
     var body: some View {
         GeometryReader { proxy in
             let dividerHeight: CGFloat = 1
             let paneHeight = (proxy.size.height - dividerHeight) / 2
             let safeAreaInsets = proxy.safeAreaInsets
+            let activeDragProgress = max(topDragProgress, bottomDragProgress)
+            let handoffProgress = handoffVisualProgress(for: activeDragProgress)
+            let isHandoffArmed = activeDragProgress >= handoffCommitThreshold
 
             ZStack {
                 VStack(spacing: 0) {
                     speakerPane(
                         title: "Japanese reader",
-                        listeningLabel: "聞き取り中",
                         speaker: .conversationPartner,
                         isFlipped: true,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
@@ -31,13 +35,11 @@ struct ConversationScreen: View {
                         contentInsets: paneContentInsets(isFlipped: true, safeAreaInsets: safeAreaInsets)
                     )
 
-                    Rectangle()
-                        .fill(AppTheme.divider)
+                    centerDivider(progress: handoffProgress, isArmed: isHandoffArmed)
                         .frame(height: dividerHeight)
 
                     speakerPane(
                         title: "English reader",
-                        listeningLabel: "Listening",
                         speaker: .localUser,
                         isFlipped: false,
                         size: CGSize(width: proxy.size.width, height: paneHeight),
@@ -121,9 +123,7 @@ struct ConversationScreen: View {
                         .stroke(Color.black.opacity(0.14), lineWidth: 1)
                 )
 
-            Image(systemName: transportSymbolName)
-                .font(.system(size: AppTheme.transportControlIconSize, weight: .medium))
-                .foregroundStyle(Color.black)
+            transportIcon
         }
         .contentShape(Circle())
         .scaleEffect(isHoldingExit ? 1.03 : 1)
@@ -157,6 +157,7 @@ struct ConversationScreen: View {
         .accessibilityLabel(transportAccessibilityLabel)
         .accessibilityValue(transportAccessibilityValue)
         .accessibilityHint(transportAccessibilityHint)
+        .accessibilityAddTraits(.isButton)
     }
 
     private var displayedStatusMessage: String {
@@ -185,7 +186,7 @@ struct ConversationScreen: View {
         case .paused:
             return "play.fill"
         case .ready:
-            return "pause.fill"
+            return "waveform"
         case .reconnecting(_):
             return "arrow.clockwise"
         case .failed(_):
@@ -193,6 +194,17 @@ struct ConversationScreen: View {
         case .idle, .bootstrapping:
             return "waveform"
         }
+    }
+
+    private var shouldAnimateLiveTransportIcon: Bool {
+        appState.session.connectionState == .ready && !isHoldingExit && !reduceMotion
+    }
+
+    private var transportIcon: some View {
+        Image(systemName: transportSymbolName)
+            .font(.system(size: AppTheme.transportControlIconSize, weight: .medium))
+            .foregroundStyle(Color.black)
+            .symbolEffect(.pulse, options: .repeating, isActive: shouldAnimateLiveTransportIcon)
     }
 
     private var transportAccessibilityLabel: String {
@@ -247,7 +259,6 @@ struct ConversationScreen: View {
     @ViewBuilder
     private func speakerPane(
         title: String,
-        listeningLabel: String,
         speaker: ActiveSpeaker,
         isFlipped: Bool,
         size: CGSize,
@@ -269,7 +280,6 @@ struct ConversationScreen: View {
                 surfaceContentBlock(
                     speaker: speaker,
                     isActive: isActive,
-                    listeningLabel: listeningLabel,
                     handoffSymbol: handoffSymbol,
                     dragProgress: dragProgress,
                     primary: primary,
@@ -334,7 +344,9 @@ struct ConversationScreen: View {
             }
             .onEnded { value in
                 defer {
-                    setDragProgress(0, for: speaker)
+                    withAnimation(.spring(response: 0.22, dampingFraction: 0.82)) {
+                        setDragProgress(0, for: speaker)
+                    }
                 }
 
                 guard appState.session.activeSpeaker == speaker else {
@@ -354,7 +366,7 @@ struct ConversationScreen: View {
 
                 let normalized = normalizedProgress(for: value.translation.height, isFlipped: isFlipped, height: height)
 
-                guard normalized >= 0.4 else {
+                guard normalized >= handoffCommitThreshold else {
                     return
                 }
 
@@ -368,6 +380,25 @@ struct ConversationScreen: View {
 
         let distance = isFlipped ? translationHeight : -translationHeight
         return max(0, min(distance / height, 1))
+    }
+
+    private func handoffVisualProgress(for dragProgress: CGFloat) -> CGFloat {
+        min(max(dragProgress / handoffCommitThreshold, 0), 1)
+    }
+
+    private func centerDivider(progress: CGFloat, isArmed: Bool) -> some View {
+        Rectangle()
+            .fill(AppTheme.divider)
+            .overlay {
+                Capsule()
+                    .fill(AppTheme.primaryText.opacity(progress * 0.46))
+                    .frame(height: 1 + (progress * (isArmed ? 3.5 : 2.5)))
+                    .shadow(
+                        color: AppTheme.primaryText.opacity(isArmed ? 0.18 : 0),
+                        radius: isArmed ? 5 : 0
+                    )
+            }
+            .animation(.spring(response: 0.18, dampingFraction: 0.82), value: isArmed)
     }
 
     private func setDragProgress(_ progress: CGFloat, for speaker: ActiveSpeaker) {
@@ -386,11 +417,14 @@ struct ConversationScreen: View {
         speaker == .localUser ? "English" : "Japanese"
     }
 
+    private func listeningLabel(for speaker: ActiveSpeaker) -> String {
+        speaker == .localUser ? "Listening" : "聞き取り中"
+    }
+
     @ViewBuilder
     private func surfaceContentBlock(
         speaker: ActiveSpeaker,
         isActive: Bool,
-        listeningLabel: String,
         handoffSymbol: String,
         dragProgress: CGFloat,
         primary: Color,
@@ -400,9 +434,10 @@ struct ConversationScreen: View {
     ) -> some View {
         if isActive {
             activeInputBlock(
-                listeningLabel: listeningLabel,
+                speaker: speaker,
                 handoffSymbol: handoffSymbol,
                 dragProgress: dragProgress,
+                primary: primary,
                 secondary: secondary,
                 textAlignment: textAlignment,
                 alignment: alignment
@@ -419,37 +454,53 @@ struct ConversationScreen: View {
 
     @ViewBuilder
     private func activeInputBlock(
-        listeningLabel: String,
+        speaker: ActiveSpeaker,
         handoffSymbol: String,
         dragProgress: CGFloat,
+        primary: Color,
         secondary: Color,
         textAlignment: TextAlignment,
         alignment: HorizontalAlignment
     ) -> some View {
+        let inputText = appState.session.inputText(for: speaker)
         let frameAlignment: Alignment = alignment == .trailing ? .bottomTrailing : .bottomLeading
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
+        let handoffProgress = handoffVisualProgress(for: dragProgress)
+        let isHandoffArmed = dragProgress >= handoffCommitThreshold
+        let pullDistance: CGFloat = 26 * handoffProgress
 
-        VStack(alignment: alignment, spacing: 10) {
+        VStack(alignment: alignment, spacing: 12) {
             HStack(spacing: 8) {
                 if !hasSeenHandoffHint {
                     Image(systemName: handoffSymbol)
                         .opacity(0.58 + (dragProgress * 0.42))
                 }
 
-                Text(listeningLabel)
+                Text(listeningLabel(for: speaker))
                     .lineLimit(1)
                     .minimumScaleFactor(0.74)
             }
-            .font(.system(size: 17, weight: .medium))
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(secondary)
             .multilineTextAlignment(textAlignment)
             .frame(maxWidth: .infinity, alignment: textFrameAlignment)
 
+            Text(inputText)
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(primary.opacity(0.72))
+                .multilineTextAlignment(textAlignment)
+                .lineLimit(4)
+                .minimumScaleFactor(0.62)
+                .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+
             Capsule()
-                .fill(secondary.opacity(0.35))
-                .frame(width: 46, height: 3)
+                .fill(secondary.opacity(0.35 + (handoffProgress * 0.24)))
+                .frame(width: 46 + (handoffProgress * 18), height: 3 + handoffProgress)
                 .frame(maxWidth: .infinity, alignment: textFrameAlignment)
         }
-        .opacity(0.58)
+        .opacity(0.58 + (handoffProgress * 0.14))
+        .offset(y: -pullDistance)
+        .animation(.spring(response: 0.18, dampingFraction: 0.82), value: isHandoffArmed)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
     }
 
@@ -468,8 +519,12 @@ struct ConversationScreen: View {
         let textFrameAlignment: Alignment = textAlignment == .leading ? .leading : .trailing
 
         if !hasAnyOutput {
-            Color.clear
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
+            idleTeleprompterBaselines(
+                primary: primary,
+                alignment: alignment,
+                frameAlignment: frameAlignment,
+                textFrameAlignment: textFrameAlignment
+            )
         } else {
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {
@@ -528,6 +583,29 @@ struct ConversationScreen: View {
                 }
             }
         }
+    }
+
+    private func idleTeleprompterBaselines(
+        primary: Color,
+        alignment: HorizontalAlignment,
+        frameAlignment: Alignment,
+        textFrameAlignment: Alignment
+    ) -> some View {
+        let widths: [CGFloat] = [220, 164, 112]
+
+        return VStack(alignment: alignment, spacing: 12) {
+            ForEach(widths.indices, id: \.self) { index in
+                Capsule()
+                    .fill(primary.opacity(0.10 - (Double(index) * 0.018)))
+                    .frame(maxWidth: widths[index])
+                    .frame(height: 2)
+                    .frame(maxWidth: .infinity, alignment: textFrameAlignment)
+            }
+        }
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: frameAlignment)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     private func scrollTeleprompterToLatest(
