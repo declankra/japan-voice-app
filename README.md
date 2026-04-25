@@ -1,148 +1,52 @@
-# Japan Voice App
+# Japan Voice
 
-Lean scaffold for a native iPhone app plus a small Cloudflare Worker companion.
+An iPhone-native realtime interpreter for face-to-face conversations in Japan.
 
-## Product docs
+Put the phone flat between two people. Each person gets their own half of the screen, rotated toward them, while live English/Japanese translation streams across like a shared teleprompter.
 
-- `docs/vision.md`: current product vision and repo state
-- `docs/architecture.md`: locked v1 architecture and interaction model
-- `docs/implementation-plan-prompt.md`: handoff prompt for generating the implementation plan
+Read the build story: [declankramper.com/writes/japan-voice-app](https://www.declankramper.com/writes/japan-voice-app)
 
-## Structure
+## Purpose
 
-- `ios/`: SwiftUI iPhone app scaffold
-- `worker/`: TypeScript Cloudflare Worker scaffold
+Translation apps are powerful, but they still make real conversations feel like taking turns with a machine. Japan Voice is an experiment in making translation feel more like a shared surface: one phone on the counter, both people reading naturally, no awkward phone-in-face interaction.
 
-## Local setup
+## How It Works
 
-### iOS app
+- `ios/` is a native SwiftUI iPhone app with the split teleprompter UI, microphone capture, speaker handoff, and Realtime session state.
+- `worker/` is a small Cloudflare Worker that keeps the OpenAI API key off-device and mints short-lived Realtime client secrets.
+- The iPhone asks the Worker for a bootstrap, then connects directly to OpenAI Realtime for low-latency EN<->JA interpretation.
+- A shared secret protects the personal Worker when this repo is public.
 
-1. Install Xcode 16+ and `xcodegen`:
+## Run It
+
+Requirements: Xcode 16+, XcodeGen, a Cloudflare account, and an OpenAI API key.
 
 ```bash
 brew install xcodegen
-```
-2. Copy the local config template and fill in your values:
-
-```bash
 cp ios/Config/Local.xcconfig.example ios/Config/Local.xcconfig
-```
-
-3. Regenerate the Xcode project after pulling this repo version or after changing `ios/project.yml`:
-
-```bash
 cd ios
 xcodegen generate
+open JapanVoiceApp.xcodeproj
 ```
-
-4. Open the project:
-
-```bash
-open ios/JapanVoiceApp.xcodeproj
-```
-
-5. Select an iPhone simulator or your physical iPhone and run `JapanVoiceApp`.
-
-`ios/Config/Local.xcconfig` is ignored by git. That file is where you set:
-- `APP_BUNDLE_IDENTIFIER`
-- `APP_DEVELOPMENT_TEAM`
-- `JAPAN_VOICE_WORKER_BASE_HOST`
-- Optional `JAPAN_VOICE_WORKER_BASE_SCHEME`
-- `JAPAN_VOICE_APP_SHARED_SECRET`
-
-For simulator-only local development against `wrangler dev`, set:
-
-```xcconfig
-JAPAN_VOICE_WORKER_BASE_HOST = 127.0.0.1:8787
-JAPAN_VOICE_WORKER_BASE_SCHEME = http
-```
-
-For a deployed worker or a real iPhone, keep the default `https` scheme and set only the hostname, not a full URL.
-
-### Worker
-
-1. Install dependencies:
 
 ```bash
 cd worker
 npm install
-```
-
-2. Create local env vars:
-
-```bash
 cp .env.example .dev.vars
-```
-
-3. Put your real values in `worker/.dev.vars`:
-- `OPENAI_API_KEY`
-- `OPENAI_REALTIME_MODEL`
-- `APP_SHARED_SECRET`
-
-The `APP_SHARED_SECRET` in `.dev.vars` must exactly match `JAPAN_VOICE_APP_SHARED_SECRET` in `ios/Config/Local.xcconfig`.
-
-4. Start the worker locally:
-
-```bash
 npm run dev
 ```
 
-5. Type-check the worker:
-
-```bash
-npm run typecheck
-```
-
-## Real iPhone testing
-
-If you want the app to work on a physical iPhone, the app must talk to a deployed HTTPS worker. `http://127.0.0.1:8787` only works from the simulator running on your Mac.
-
-1. Log into Cloudflare for Wrangler:
-
-```bash
-cd worker
-npx wrangler login
-```
-
-2. Generate a shared secret:
-
-```bash
-openssl rand -hex 32
-```
-
-3. Set worker secrets in Cloudflare:
+For a real iPhone, deploy the Worker and point `ios/Config/Local.xcconfig` at the deployed hostname:
 
 ```bash
 cd worker
 npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put APP_SHARED_SECRET
-```
-
-4. Deploy the worker:
-
-```bash
-cd worker
 npm run deploy
 ```
 
-5. Copy the deployed `https://...workers.dev` hostname into `ios/Config/Local.xcconfig` as `JAPAN_VOICE_WORKER_BASE_HOST`.
-   Example: `https://japan-voice-worker.example.workers.dev` becomes `japan-voice-worker.example.workers.dev`
-6. Put the same `APP_SHARED_SECRET` value into `ios/Config/Local.xcconfig` as `JAPAN_VOICE_APP_SHARED_SECRET`.
-7. Set `APP_DEVELOPMENT_TEAM` to your Apple team ID and `APP_BUNDLE_IDENTIFIER` to an identifier you control.
-8. Open `ios/JapanVoiceApp.xcodeproj`, choose your connected iPhone as the run destination, and run the app from Xcode.
-9. Accept the microphone permission prompt on first launch.
+Set `JAPAN_VOICE_WORKER_BASE_HOST` to your `workers.dev` hostname and make `JAPAN_VOICE_APP_SHARED_SECRET` match the Worker secret.
 
-## Notes
+## Vision
 
-- The app does not store a long-lived OpenAI API key on-device. The worker mints a short-lived Realtime client secret and the phone connects to OpenAI Realtime directly.
-- `worker/.env.example` and `ios/Config/Local.xcconfig.example` are safe to commit. Your real secrets belong only in `worker/.dev.vars`, Cloudflare secrets, and your ignored `ios/Config/Local.xcconfig`.
-- A fresh GitHub clone is enough to scaffold the project. The intentionally missing local-only pieces are:
-  - `ios/Config/Local.xcconfig`
-  - `worker/.dev.vars`
-  - Cloudflare Worker secrets created with `wrangler secret put`
-
-## Current state
-
-- The iOS app captures microphone audio, requests a short-lived Realtime bootstrap from the worker, and connects directly to OpenAI Realtime for live interpretation.
-- The worker exposes `/health` and `/ws-token` and mints short-lived OpenAI Realtime client secrets.
-- The repo defaults to `gpt-realtime-1.5` for the Realtime model and `gpt-4o-mini-transcribe` for input transcription.
+The wedge is physical: a phone laid flat between two people, text facing each reader, with live translation that keeps the human moment in the center. v1 proves that interaction. The longer-term goal is a travel companion that feels calm enough for an izakaya counter, a train station question, or a quick conversation with someone you otherwise could not talk to.
