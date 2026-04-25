@@ -14,6 +14,7 @@ struct ConversationScreen: View {
 
     private let teleprompterLiveId = "teleprompter-live-output"
     private let handoffCommitThreshold: CGFloat = 0.4
+    private let flippedPaneTopControlClearance: CGFloat = 84
 
     var body: some View {
         GeometryReader { proxy in
@@ -317,13 +318,14 @@ struct ConversationScreen: View {
     private func paneContentInsets(isFlipped: Bool, safeAreaInsets: EdgeInsets) -> EdgeInsets {
         let horizontalInset: CGFloat = 24
         let verticalInset: CGFloat = 20
-        let screenEdgeInset = max(
-            verticalInset,
-            (isFlipped ? safeAreaInsets.top : safeAreaInsets.bottom) + 12
-        )
+        let screenEdgeInset = if isFlipped {
+            max(verticalInset, safeAreaInsets.top + 28, flippedPaneTopControlClearance)
+        } else {
+            max(verticalInset, safeAreaInsets.bottom + 12)
+        }
 
-        // The upper pane is rotated 180°, so extra clearance for the screen edge
-        // must be applied to the pre-rotation bottom inset.
+        // The upper pane is rotated 180°, so visual top-edge clearance maps to
+        // the pre-rotation bottom inset.
         return EdgeInsets(
             top: verticalInset,
             leading: horizontalInset,

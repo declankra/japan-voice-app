@@ -48,9 +48,9 @@ struct ConversationSession: Sendable {
     var statusMessage: String = "Ready when you are."
     var sessionId: String?
 
-    private(set) var localInputText: String = "Listening."
+    private(set) var localInputText: String = "..."
     private(set) var localInputSecondaryText: String = "English in."
-    private(set) var partnerInputText: String = "聞いています。"
+    private(set) var partnerInputText: String = "..."
     private(set) var partnerInputSecondaryText: String = "Japanese in."
     private(set) var localOutputLines: [TeleprompterLine] = []
     private(set) var partnerOutputLines: [TeleprompterLine] = []
@@ -101,10 +101,10 @@ struct ConversationSession: Sendable {
 
         switch speaker {
         case .localUser:
-            localInputText = trimmed.isEmpty ? "Listening." : trimmed
+            localInputText = trimmed.isEmpty ? "..." : trimmed
             localInputSecondaryText = "English in."
         case .conversationPartner:
-            partnerInputText = trimmed.isEmpty ? "聞いています。" : trimmed
+            partnerInputText = trimmed.isEmpty ? "..." : trimmed
             partnerInputSecondaryText = "Japanese in."
         }
     }
@@ -116,10 +116,10 @@ struct ConversationSession: Sendable {
     mutating func clearInputTranscript(for speaker: ActiveSpeaker) {
         switch speaker {
         case .localUser:
-            localInputText = "Listening."
+            localInputText = "..."
             localInputSecondaryText = "English in."
         case .conversationPartner:
-            partnerInputText = "聞いています。"
+            partnerInputText = "..."
             partnerInputSecondaryText = "Japanese in."
         }
     }
