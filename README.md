@@ -4,7 +4,7 @@ An iPhone-native realtime interpreter for face-to-face conversations in Japan.
 
 Put the phone flat between two people. Each person gets their own half of the screen, rotated toward them, while live English/Japanese translation streams across like a shared teleprompter.
 
-Read the build story: [declankramper.com/writes/japan-voice-app](https://www.declankramper.com/writes/japan-voice-app)
+Read the build story: [declankramper.com/writes/vision](https://www.declankramper.com/writes/vision)
 
 ## Purpose
 
