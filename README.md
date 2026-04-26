@@ -21,13 +21,34 @@ Translation apps are powerful, but they still make real conversations feel like 
 
 Requirements: Xcode 16+, XcodeGen, a Cloudflare account, and an OpenAI API key.
 
+Create the local iOS config:
+
 ```bash
 brew install xcodegen
 cp ios/Config/Local.xcconfig.example ios/Config/Local.xcconfig
+```
+
+Fill in `ios/Config/Local.xcconfig`:
+
+```xcconfig
+APP_BUNDLE_IDENTIFIER = com.yourname.JapanVoiceApp
+APP_DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID
+JAPAN_VOICE_WORKER_BASE_HOST = 127.0.0.1:8787
+JAPAN_VOICE_WORKER_BASE_SCHEME = http
+JAPAN_VOICE_APP_SHARED_SECRET = replace-with-a-random-shared-secret
+```
+
+Use `127.0.0.1:8787` + `http` for simulator testing against local Wrangler. For a physical iPhone, use your deployed `workers.dev` hostname and keep the scheme as `https`.
+
+Generate and open the Xcode project:
+
+```bash
 cd ios
 xcodegen generate
 open JapanVoiceApp.xcodeproj
 ```
+
+Create the local Worker env:
 
 ```bash
 cd worker
@@ -36,17 +57,24 @@ cp .env.example .dev.vars
 npm run dev
 ```
 
-For a real iPhone, deploy the Worker and point `ios/Config/Local.xcconfig` at the deployed hostname:
+Fill in `worker/.dev.vars`:
+
+```dotenv
+OPENAI_API_KEY=replace-with-your-openai-api-key
+OPENAI_REALTIME_MODEL=gpt-realtime-1.5
+APP_SHARED_SECRET=replace-with-the-same-shared-secret
+```
+
+`APP_SHARED_SECRET` must match `JAPAN_VOICE_APP_SHARED_SECRET`.
+
+For a real iPhone, deploy the Worker:
 
 ```bash
 cd worker
+npx wrangler login
 npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put APP_SHARED_SECRET
 npm run deploy
 ```
 
-Set `JAPAN_VOICE_WORKER_BASE_HOST` to your `workers.dev` hostname and make `JAPAN_VOICE_APP_SHARED_SECRET` match the Worker secret.
-
-## Vision
-
-The wedge is physical: a phone laid flat between two people, text facing each reader, with live translation that keeps the human moment in the center. v1 proves that interaction. The longer-term goal is a travel companion that feels calm enough for an izakaya counter, a train station question, or a quick conversation with someone you otherwise could not talk to.
+`ios/Config/Local.xcconfig` and `worker/.dev.vars` are ignored by git. Keep real secrets there or in Cloudflare secrets, not in the app bundle or committed files.
