@@ -9,12 +9,6 @@ final class OpenAIRealtimeService: NSObject, RealtimeService {
     )
     private let audioSession = AVAudioSession.sharedInstance()
     private let audioFormat = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 24_000, channels: 1, interleaved: true)!
-    private let interpreterInstructions = """
-    You are the live interpreter for a shared phone screen between an English speaker and a Japanese speaker.
-    Detect the spoken language for each utterance and translate it into the opposite language only.
-    Output text only. Do not explain what you are doing. Do not add notes, labels, romaji, or extra commentary.
-    Keep the translation concise, natural, and polite for in-person travel conversation.
-    """
 
     private var eventHandler: @Sendable (RealtimeServiceEvent) -> Void = { _ in }
     private var transport: RealtimeWebSocketTransport?
@@ -22,12 +16,43 @@ final class OpenAIRealtimeService: NSObject, RealtimeService {
     private var audioConverter: AVAudioConverter?
     private var isPaused = false
     private var currentSessionId: String?
+    private var activeSpeaker: ActiveSpeaker = .localUser
+
+    private struct DirectionalConfig {
+        let instructions: String
+        let inputLanguageCode: String
+    }
+
+    private func directionalConfig(for speaker: ActiveSpeaker) -> DirectionalConfig {
+        switch speaker {
+        case .localUser:
+            return DirectionalConfig(
+                instructions: """
+                You are a live interpreter for a shared phone screen between an English speaker and a Japanese speaker.
+                The current speaker is the English speaker. The next utterance is in English.
+                Output ONLY natural, polite Japanese suitable for in-person travel conversation.
+                Text only. No notes, labels, romaji, or commentary.
+                """,
+                inputLanguageCode: "en"
+            )
+        case .conversationPartner:
+            return DirectionalConfig(
+                instructions: """
+                You are a live interpreter for a shared phone screen between an English speaker and a Japanese speaker.
+                The current speaker is the Japanese speaker. The next utterance is in Japanese.
+                Output ONLY natural, polite English suitable for in-person travel conversation.
+                Text only. No notes, labels, or commentary.
+                """,
+                inputLanguageCode: "ja"
+            )
+        }
+    }
 
     func setEventHandler(_ handler: @escaping @Sendable (RealtimeServiceEvent) -> Void) {
         eventHandler = handler
     }
 
-    func connect(using bootstrap: RealtimeBootstrap) async throws {
+    func connect(using bootstrap: RealtimeBootstrap, activeSpeaker: ActiveSpeaker) async throws {
         await disconnect()
 
         let permissionGranted = await requestRecordPermission()
@@ -43,6 +68,7 @@ final class OpenAIRealtimeService: NSObject, RealtimeService {
 
         currentSessionId = bootstrap.session.id
         isPaused = false
+        self.activeSpeaker = activeSpeaker
 
         let transport = RealtimeWebSocketTransport(bootstrap: bootstrap) { [weak self] event in
             guard let self else { return }
@@ -57,17 +83,37 @@ final class OpenAIRealtimeService: NSObject, RealtimeService {
 
         do {
             try await transport.connect()
+            let config = directionalConfig(for: activeSpeaker)
             await transport.configureSession(
-                instructions: interpreterInstructions,
-                outputModalities: ["text"]
+                instructions: config.instructions,
+                outputModalities: ["text"],
+                inputLanguageCode: config.inputLanguageCode
             )
             try startAudioCapture()
-            logger.log("Realtime service connected for session \(bootstrap.session.id, privacy: .public)")
+            logger.log("Realtime service connected for session \(bootstrap.session.id, privacy: .public) with speaker \(activeSpeaker.rawValue, privacy: .public)")
         } catch {
             self.transport = nil
             currentSessionId = nil
             throw RealtimeServiceConnectError.websocketSetupFailed(error.localizedDescription)
         }
+    }
+
+    func setActiveSpeaker(_ speaker: ActiveSpeaker) async {
+        guard activeSpeaker != speaker else { return }
+        activeSpeaker = speaker
+
+        guard let transport else { return }
+
+        await transport.cancelResponse()
+        await transport.commitInputBuffer()
+
+        let config = directionalConfig(for: speaker)
+        await transport.configureSession(
+            instructions: config.instructions,
+            outputModalities: ["text"],
+            inputLanguageCode: config.inputLanguageCode
+        )
+        logger.log("Realtime active speaker set to \(speaker.rawValue, privacy: .public) for session \(self.currentSessionId ?? "unknown", privacy: .public)")
     }
 
     func pause() async {
@@ -269,7 +315,7 @@ actor RealtimeWebSocketTransport {
         ])
     }
 
-    func configureSession(instructions: String, outputModalities: [String]) async {
+    func configureSession(instructions: String, outputModalities: [String], inputLanguageCode: String) async {
         await send(event: [
             "type": "session.update",
             "session": [
@@ -282,7 +328,8 @@ actor RealtimeWebSocketTransport {
                 "audio": [
                     "input": [
                         "transcription": [
-                            "model": "gpt-4o-mini-transcribe"
+                            "model": "gpt-4o-mini-transcribe",
+                            "language": inputLanguageCode
                         ],
                         "turn_detection": [
                             "type": "server_vad",

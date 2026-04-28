@@ -38,6 +38,9 @@ final class AppState {
     private var reconnectTask: Task<Void, Never>?
 
     @ObservationIgnored
+    private var speakerHandoffTask: Task<Void, Never>?
+
+    @ObservationIgnored
     private var shouldReconnectOnForeground = false
 
     @ObservationIgnored
@@ -137,6 +140,19 @@ final class AppState {
         guard screen == .conversation else { return }
         session.selectSpeaker(speaker)
         logger.log("Speaker handoff selected for session \(self.logSessionID, privacy: .public): \(speaker.rawValue, privacy: .public)")
+
+        speakerHandoffTask?.cancel()
+        speakerHandoffTask = Task { [weak self] in
+            guard let self else { return }
+            // Drop this handoff if a newer swipe superseded it before we ran,
+            // or if conversation state moved on while we were queued.
+            guard !Task.isCancelled,
+                  screen == .conversation,
+                  session.activeSpeaker == speaker
+            else { return }
+
+            await realtimeService.setActiveSpeaker(speaker)
+        }
     }
 
     func togglePause() {
@@ -249,7 +265,7 @@ final class AppState {
                 return
             }
 
-            try await realtimeService.connect(using: bootstrap)
+            try await realtimeService.connect(using: bootstrap, activeSpeaker: session.activeSpeaker)
             guard !Task.isCancelled, screen == .conversation else {
                 return
             }
@@ -335,7 +351,7 @@ final class AppState {
                 do {
                     try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     let bootstrap = try await workerClient.fetchRealtimeBootstrap()
-                    try await realtimeService.connect(using: bootstrap)
+                    try await realtimeService.connect(using: bootstrap, activeSpeaker: session.activeSpeaker)
 
                     guard !Task.isCancelled, screen == .conversation else { return }
 
@@ -384,6 +400,8 @@ final class AppState {
         bootstrapTask = nil
         reconnectTask?.cancel()
         reconnectTask = nil
+        speakerHandoffTask?.cancel()
+        speakerHandoffTask = nil
     }
 
     private func applyFailure(_ error: Error) {
