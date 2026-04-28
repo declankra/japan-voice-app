@@ -38,6 +38,9 @@ final class AppState {
     private var reconnectTask: Task<Void, Never>?
 
     @ObservationIgnored
+    private var speakerHandoffTask: Task<Void, Never>?
+
+    @ObservationIgnored
     private var shouldReconnectOnForeground = false
 
     @ObservationIgnored
@@ -138,8 +141,16 @@ final class AppState {
         session.selectSpeaker(speaker)
         logger.log("Speaker handoff selected for session \(self.logSessionID, privacy: .public): \(speaker.rawValue, privacy: .public)")
 
-        Task { [weak self] in
+        speakerHandoffTask?.cancel()
+        speakerHandoffTask = Task { [weak self] in
             guard let self else { return }
+            // Drop this handoff if a newer swipe superseded it before we ran,
+            // or if conversation state moved on while we were queued.
+            guard !Task.isCancelled,
+                  screen == .conversation,
+                  session.activeSpeaker == speaker
+            else { return }
+
             await realtimeService.setActiveSpeaker(speaker)
         }
     }
@@ -389,6 +400,8 @@ final class AppState {
         bootstrapTask = nil
         reconnectTask?.cancel()
         reconnectTask = nil
+        speakerHandoffTask?.cancel()
+        speakerHandoffTask = nil
     }
 
     private func applyFailure(_ error: Error) {
