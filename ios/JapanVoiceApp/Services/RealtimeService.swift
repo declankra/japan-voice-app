@@ -28,7 +28,8 @@ enum RealtimeServiceConnectError: LocalizedError, Sendable {
 
 protocol RealtimeService: AnyObject {
     func setEventHandler(_ handler: @escaping @Sendable (RealtimeServiceEvent) -> Void)
-    func connect(using bootstrap: RealtimeBootstrap) async throws
+    func connect(using bootstrap: RealtimeBootstrap, activeSpeaker: ActiveSpeaker) async throws
+    func setActiveSpeaker(_ speaker: ActiveSpeaker) async
     func pause() async
     func resume() async throws
     func disconnect() async
@@ -39,8 +40,13 @@ final class NoopRealtimeService: RealtimeService {
         _ = handler
     }
 
-    func connect(using bootstrap: RealtimeBootstrap) async throws {
+    func connect(using bootstrap: RealtimeBootstrap, activeSpeaker: ActiveSpeaker) async throws {
         _ = bootstrap
+        _ = activeSpeaker
+    }
+
+    func setActiveSpeaker(_ speaker: ActiveSpeaker) async {
+        _ = speaker
     }
 
     func pause() async {}

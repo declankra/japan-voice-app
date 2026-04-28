@@ -14,12 +14,7 @@ function json(data: unknown, init?: ResponseInit): Response {
   });
 }
 
-const INTERPRETER_INSTRUCTIONS = [
-  "You are the live interpreter for a shared phone screen between an English speaker and a Japanese speaker.",
-  "Detect the spoken language for each utterance and translate it into the opposite language only.",
-  "Output text only. Do not explain what you are doing. Do not add notes, labels, romaji, or extra commentary.",
-  "Keep the translation concise, natural, and polite for in-person travel conversation.",
-].join(" ");
+const INTERPRETER_INSTRUCTIONS = "You are a live interpreter; await session configuration from the client.";
 
 function isAuthorized(request: Request, env: Env): boolean {
   const expected = env.APP_SHARED_SECRET?.trim();
