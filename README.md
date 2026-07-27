@@ -1,6 +1,6 @@
 # Japan Voice
 
-An iPhone-native realtime interpreter for face-to-face conversations in Japan, using gpt-realtime-2.
+An iPhone-native realtime interpreter for face-to-face conversations in Japan.
 
 Put the phone flat between two people. Each person gets their own half of the screen, rotated toward them, while live English/Japanese translation streams across like a shared teleprompter.
 
@@ -61,7 +61,7 @@ Fill in `worker/.dev.vars`:
 
 ```dotenv
 OPENAI_API_KEY=replace-with-your-openai-api-key
-OPENAI_REALTIME_MODEL=gpt-realtime-2
+OPENAI_REALTIME_MODEL=gpt-realtime-1.5
 APP_SHARED_SECRET=replace-with-the-same-shared-secret
 ```
 
